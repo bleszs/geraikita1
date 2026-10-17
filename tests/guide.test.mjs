@@ -6,7 +6,7 @@ import {guideKey,emptyGuideProgress,validateGuideProgress,readGuideProgress,writ
 import {guideLayout} from '../public/guide-layout.js';
 
 test('every shipped page has a short replayable guide, with unique topics/steps and actual route targets',()=>{
-  const routes=new Set(['dapur','layanan','ringkasan','stok','pesanan','restock','kelompok','surplus','riwayat','pengaturan','panduan']);
+  const routes=new Set(['dapur','layanan','ringkasan','stok','pesanan','restock','kelompok','staf','riwayat','pengaturan','panduan']);
   assert.deepEqual(new Set(Object.keys(PAGE_TOPICS)),routes);
   assert.equal(new Set(GUIDE_TOPICS.map(t=>t.id)).size,GUIDE_TOPICS.length);
   for(const topic of GUIDE_TOPICS){

@@ -16,7 +16,7 @@ test('role migration preserves every existing table and session; reopen retains 
  const dir=mkdtempSync(join(tmpdir(),'gerai-staff-')),file=join(dir,'test.sqlite');let store=createStore(file);
  t.after(()=>{store.close();rmSync(dir,{recursive:true,force:true});});
  let identity=createIdentity(store);const owner=identity.register(registration());store.db.exec('DROP TABLE staff_actions; DROP TABLE account_roles');
- const tables=store.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").map(x=>x.name);assert.equal(tables.length,29);
+ const tables=store.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").map(x=>x.name);assert.equal(tables.length,32);
  const snapshot=()=>tables.map(name=>[name,store.all(`SELECT * FROM ${name}`).map(r=>JSON.stringify(r)).sort()]);const before=snapshot();store.close();store=createStore(file);identity=createIdentity(store);
  assert.deepEqual(snapshot(),before);assert.equal(identity.resolve(owner.id).role,'owner');assert.equal(store.get('SELECT COUNT(*) AS n FROM account_roles').n,1);
  const a=staffBody(),b=staffBody('kitchen');identity.createStaff(identity.resolve(owner.id),a);const deleted=identity.createStaff(identity.resolve(owner.id),b);const session=identity.login(a),missing=identity.login(b);store.run('DELETE FROM account_roles WHERE account_id=?',deleted.id);
@@ -51,7 +51,8 @@ test('HTTP role matrix prevents owner API access, strips kitchen finance and let
  const s=app.identity||app.store.get('SELECT * FROM sessions WHERE csrf=?',owner.data.csrf),svc=app.service;
  const p=svc.saveIngredient(s,null,{name:'Bahan rahasia',unit:'gram',min:0,storageNote:'Catatan rahasia',catalogRevision:1});svc.receive(s,{productId:p.id,qty:1000,unitPrice:999,supplier:'Pemasok pribadi',idempotencyKey:randomUUID()});
  const m=svc.saveMenu(s,null,{name:'Menu pesanan',price:27000,aliases:[],recipe:{[p.id]:25},catalogRevision:2,preparation:{minutes:5,passiveMinutes:1,station:'dapur'}});
- for(const who of [cashier,kitchen])for(const path of ['/staff','/menus','/ingredients','/transactions','/offers','/displays','/community/invite','/usage-reviews'])assert.equal((await post(who,path,{workspace_id:'fake',role:'owner'})).status,403,path);
+ for(const who of [cashier,kitchen])for(const path of ['/staff','/menus','/ingredients','/offers','/displays','/community/invite','/usage-reviews'])assert.equal((await post(who,path,{workspace_id:'fake',role:'owner'})).status,403,path);
+ assert.equal((await post(kitchen,'/transactions',{workspace_id:'fake',role:'owner'})).status,403,'/transactions');assert.notEqual((await post(cashier,'/transactions',{workspace_id:'fake',role:'owner'})).status,403,'cashier may record a direct sale');
  const read=async who=>{const r=await fetch(base+'/api/bootstrap',{headers:{cookie:who.cookie}});return r.json();};
  const c=await read(cashier),k=await read(kitchen);for(const x of [c,k])for(const key of ['stock','availableStock','catalog','transactions','audit','community','group','staff','displays','recommendations'])assert.equal(key in x,false,key);
  assert.equal(c.menu[0].price,27000);assert.equal(k.menu.length,0);assert.equal(JSON.stringify(k).includes('Pemasok pribadi'),false);assert.equal(JSON.stringify(k).includes('Bahan rahasia'),false);

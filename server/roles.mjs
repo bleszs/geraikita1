@@ -15,11 +15,11 @@ export function authorize(s,path,method,body){
   const reading=method==='GET',actions=path.match(/^\/api\/kitchen\/orders\/[a-zA-Z0-9-]+\/actions$/),decision=/^\/api\/order-requests\/[a-zA-Z0-9-]+\/decision$/.test(path);
   let allowed=reading&&['/api/bootstrap','/api/kitchen','/api/kitchen/events'].includes(path);
   if(method==='POST'){
-    allowed=['/api/auth/logout','/api/account/password'].includes(path)||s.role==='cashier'&&(path==='/api/kitchen/orders'||decision)||s.role==='kitchen'&&['/api/kitchen/commands','/api/transcriptions'].includes(path);
-    if(actions)allowed=(s.role==='cashier'?['complete','cancel']:['start','passive','resume','ready','void']).includes(body.action)&&body.wasted===undefined;
+    allowed=['/api/auth/logout','/api/account/password'].includes(path)||s.role==='cashier'&&['/api/kitchen/orders','/api/extractions','/api/transcriptions','/api/transactions'].includes(path)||s.role==='cashier'&&decision||s.role==='kitchen'&&['/api/kitchen/commands','/api/transcriptions'].includes(path);
+    if(actions)allowed=(s.role==='cashier'?['complete','cancel']:['start','passive','resume','ready']).includes(body.action)&&body.wasted===undefined;
   }
   requireValue(allowed,'Peran akun ini tidak memiliki akses ke tindakan tersebut.',403,'role_forbidden');
-  if(method==='POST'&&(path==='/api/kitchen/orders'||actions))requireValue(typeof body.idempotencyKey==='string'&&body.idempotencyKey.startsWith(staffPrefix(s)),'Kunci tindakan harus berasal dari akun dan versi peran saat ini.',409);
+  if(method==='POST'&&(path==='/api/kitchen/orders'||path==='/api/transactions'||actions))requireValue(typeof body.idempotencyKey==='string'&&body.idempotencyKey.startsWith(staffPrefix(s)),'Kunci tindakan harus berasal dari akun dan versi peran saat ini.',409);
 }
 export function staffBootstrap(store,service,s,account){
   const source=service.kitchen.snapshot(s),cashier=s.role==='cashier',prefix=staffPrefix(s);
@@ -28,6 +28,7 @@ export function staffBootstrap(store,service,s,account){
     items:o.items.map(i=>({id:i.id,name:i.name,qty:i.qty,note:i.note,...(i.voided?{voided:true}:{}),...(cashier?{unitPrice:i.unitPrice}:{})})),
     tasks:o.tasks.map(t=>({id:t.id,name:t.name,qty:t.qty,note:t.note,station:t.station,minutes:t.minutes,passive_minutes:t.passive_minutes,status:t.status,phase_started_at:t.phase_started_at,etaMinutes:t.etaMinutes}))}));
   const row=store.get('SELECT id,name,letter FROM businesses WHERE workspace_id=? AND id=?',s.workspace_id,s.business_id),epoch=store.get('SELECT created_at FROM workspaces WHERE id=?',s.workspace_id).created_at;
-  return {mode:'live',workspaceId:s.workspace_id,workspaceEpoch:epoch,business:row,account,csrf:s.csrf,menu:cashier?store.menus(s).map(m=>({id:m.id,name:m.name,price:m.price})):[],catalogRevision:store.get('SELECT catalog_revision FROM business_state WHERE workspace_id=? AND business_id=?',s.workspace_id,s.business_id).catalog_revision,
+  const lowStock=cashier?store.ingredients(s).filter(p=>{const stock=store.get('SELECT quantity FROM inventory WHERE workspace_id=? AND business_id=? AND product_id=?',s.workspace_id,s.business_id,p.id);return (stock?.quantity||0)<p.min*10000;}).map(p=>p.name):[];
+  return {mode:'live',workspaceId:s.workspace_id,workspaceEpoch:epoch,business:row,account,csrf:s.csrf,menu:cashier?store.menus(s).map(m=>({id:m.id,name:m.name,price:m.price})):[],lowStock,catalogRevision:store.get('SELECT catalog_revision FROM business_state WHERE workspace_id=? AND business_id=?',s.workspace_id,s.business_id).catalog_revision,
     kitchen:{orders,next:source.next,requests:cashier?source.requests:[],stations:source.stations.map(({revision,...c})=>c),menus:cashier?source.menus.map(({id,name,configured,status})=>({id,name,configured,status})):[],recentActions:source.recentActions.filter(k=>k.startsWith(prefix)),revision:source.revision},offlineRestricted:true};
 }

@@ -25,7 +25,7 @@ export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-
   const displays=createDisplayAccess(store);
   const failures=new Map();
   const kitchenStreams=new Set();
-  const stateOf=async s=>s.role==='owner'?({...service.bootstrap(s),displays:displays.list(s),staff:identity.staff(s),staffInvites:identity.staffInvites(s),account:identity.details(s),ai:await extractor.status(),speech:await transcriber.status()}):({...staffBootstrap(store,service,s,identity.details(s)),speech:s.role==='kitchen'?await transcriber.status():{available:false}});
+  const stateOf=async s=>s.role==='owner'?({...service.bootstrap(s),displays:displays.list(s),staff:identity.staff(s),staffInvites:identity.staffInvites(s),account:identity.details(s),ai:await extractor.status(),speech:await transcriber.status()}):({...staffBootstrap(store,service,s,identity.details(s)),speech:await transcriber.status()});
   const server = http.createServer(async (request, response) => {
     const json = (value, status = 200) => { response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); response.end(JSON.stringify(value)); };
     try {
@@ -121,12 +121,15 @@ export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-
         requireValue(session, 'Masuk ke akun untuk membuka catatan usaha.', 401);
         if (mutating) requireValue(body.csrf === session.csrf, 'Sesi berubah. Muat ulang halaman.', 403);
         authorize(session,pathname,request.method,body);
-        if(pathname==='/api/staff'&&mutating)return json(identity.createStaff(session,body),201);
+        if(pathname==='/api/staff'&&mutating)return json(body.code?identity.createStaffAccess(session,body):identity.createStaff(session,body),201);
+        if(pathname==='/api/staff-access'&&mutating)return json(identity.createStaffAccess(session,body),201);
         if(pathname==='/api/staff-invites')return json(mutating?identity.createStaffInvite(session,body):identity.staffInvites(session),mutating?201:200);
         const inviteRevoke=pathname.match(/^\/api\/staff-invites\/([a-zA-Z0-9-]+)\/revoke$/);
         if(inviteRevoke&&mutating)return json(identity.revokeStaffInvite(session,inviteRevoke[1],body));
         const staffMatch=pathname.match(/^\/api\/staff\/([a-zA-Z0-9-]+)$/);
         if(staffMatch&&mutating)return json(identity.updateStaff(session,staffMatch[1],body));
+        const staffDelete=pathname.match(/^\/api\/staff\/([a-zA-Z0-9-]+)\/delete$/);
+        if(staffDelete&&mutating)return json(identity.deleteStaff(session,staffDelete[1],body));
         if(pathname==='/api/displays'&&mutating)return json(displays.create(session,body),201);
         const displayMatch=pathname.match(/^\/api\/displays\/([a-zA-Z0-9-]+)\/revoke$/);
         if(displayMatch&&mutating)return json(displays.revoke(session,displayMatch[1]));

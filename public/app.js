@@ -48,7 +48,7 @@ function done(a,data){
 let staffCodeTimer;
 function clearStaffCode(){clearTimeout(staffCodeTimer);ui.staffCodeResult=null;}
 function clearStaffPairing(){clearStaffCode();ui.staffInviteEpoch=(ui.staffInviteEpoch||0)+1;ui.staffInvitePending=null;ui.staffInviteTarget=null;ui.staffInviteRevoke=null;}
-function clearDisplaySecrets(){clearStaffPairing();ui.staffRestoreFocus=null;ui.staffCreateKey=null;ui.staffCreateMeta=null;ui.staffEdit=null;ui.staffFocus=null;ui.displayEpoch=(ui.displayEpoch||0)+1;ui.displayLink=null;ui.displayCreatePending=null;ui.displayRevoke=null;ui.displayFocus=null;}
+function clearDisplaySecrets(){clearStaffPairing();ui.staffAccessResult=null;ui.staffDelete=null;ui.staffFormOpen=false;ui.staffRestoreFocus=null;ui.staffCreateKey=null;ui.staffCreateMeta=null;ui.staffEdit=null;ui.staffFocus=null;ui.displayEpoch=(ui.displayEpoch||0)+1;ui.displayLink=null;ui.displayCreatePending=null;ui.displayRevoke=null;ui.displayFocus=null;}
 async function adopt(data){
   if(!state)clearDisplaySecrets();
   const before=state&&scopeOf(state);state=data;connected=true;snapshotAt=new Date().toISOString();
@@ -123,7 +123,7 @@ function lockControls(){
   const readonly=new Set(['staff-code-copy','staff-code-hide','staff-code-cancel','staff-code-cancel-revoke','staff-new-order','staff-queue','display-hide-link','display-copy','display-cancel-revoke','theme','menu','reconnect','refresh','update-app','export-sales','export-receipts','back-order','manual-order','add-order','remove-order','resume-draft','delete-draft','confirm-order','review-catalog','close-editor','close-cancel','copy-invite','close-usage-review','recovery-copy','recovery-hide']);
   document.querySelectorAll('[data-action]').forEach(b=>{if(busy||pendingAction&&!['staff-new-order','staff-queue','theme','menu','reconnect','refresh','retry-action','logout','export-sales','export-receipts','update-app'].includes(b.dataset.action)||!connected&&!readonly.has(b.dataset.action))b.disabled=true;});
   if(pendingAction)document.querySelectorAll('[data-review]').forEach(c=>c.disabled=true);
-  if(voice.active){document.querySelectorAll('#extract-form button,[data-action="manual-order"]').forEach(c=>c.disabled=true);}
+  if(voice.active){document.querySelectorAll('#extract-form button,[data-form="staff-extract"] button,[data-action="manual-order"],[data-action="staff-manual-order"]').forEach(c=>c.disabled=true);}
   if(busy||pendingAction||!connected)document.querySelectorAll('[data-action="voice-start"],[data-action="voice-use"]').forEach(c=>c.disabled=true);
   if(ui.kitchenHandsfree){const stop=document.querySelector('[data-action="kitchen-listen"]');if(stop)stop.disabled=false;}
 }
@@ -141,7 +141,8 @@ async function confirmOrder(){
 }
 document.addEventListener('input',event=>{
   if(event.target.id==='voice-text'){voice.edit(event.target.value);ui.voice=voice.state;return;}
-  const f=event.target.closest('[data-form]');if(f&&event.target.name){const name=f.dataset.form;if(name==='kitchen-station')values['station:'+f.elements.station.value]=Object.fromEntries(new FormData(f));else{values[name]??={};if(event.target.type!=='password'&&event.target.name!=='code')values[name][event.target.name]=event.target.type==='checkbox'?event.target.checked:event.target.value;}
+  if(event.target.dataset.staffReview){const item=ui.staffReview?.[Number(event.target.dataset.index)];if(item)item[event.target.dataset.staffReview]=event.target.dataset.staffReview==='qty'?Number(event.target.value):event.target.value;return;}
+  const f=event.target.closest('[data-form]')||event.target.form;if(f?.dataset.form&&event.target.name){const name=f.dataset.form;if(name==='kitchen-station')values['station:'+f.elements.station.value]=Object.fromEntries(new FormData(f));else{values[name]??={};if(event.target.type!=='password'&&!event.target.closest('.password-input-wrap')&&event.target.name!=='code')values[name][event.target.name]=event.target.type==='checkbox'?event.target.checked:event.target.value;}
     if(name==='kitchen-new')syncStaffMenuAvailability(state);
     if(name==='receipt'&&['productId','inputUnit'].includes(event.target.name)){values.receipt.qty='';values.receipt.unitPrice='';if(event.target.name==='productId')values.receipt.inputUnit='';render();}else if(name==='receipt')receiptPreview();
   }
@@ -161,7 +162,7 @@ document.addEventListener('submit',async event=>{
     busy=true;f.querySelector('button[type=submit]').disabled=true;
     try{if(b.newPassword!==b.repeatPassword)throw new Error('Ulangan kata sandi baru belum sama.');const result=await request('/auth/recover',{email:b.email,code:b.code,newPassword:b.newPassword});ui.guideAutoplayRequested=false;values={};ui.error='';await adopt(result);notify('Kata sandi dipulihkan. Buat kode pemulihan baru dari Pengaturan.');}catch(err){ui.error=err.message;}finally{busy=false;render();}return;
   }
-  if(!state||!connected||pendingAction||(kind==='extract'&&voice.active))return;busy=true;lockControls();
+  if(!state||!connected||pendingAction||(['extract','staff-extract'].includes(kind)&&voice.active))return;busy=true;lockControls();
   try{
     if(kind==='staff-code-create'||kind==='staff-code-existing'){
       if(b.confirmed!=='on')throw new Error('Periksa nama dan hak akses staf lalu konfirmasi.');
@@ -182,6 +183,18 @@ document.addEventListener('submit',async event=>{
         }
         notify(ui.staffCodeResult?'Kode masuk dibuat. Bagikan langsung kepada staf bersama alamat masuk.':'Kode sebelumnya sudah tidak aktif atau halaman telah berubah. Periksa daftar staf.');
       }catch(error){if(error.status>=400&&error.status<500)ui.staffInvitePending=null;throw error;}
+    }
+    else if(kind==='staff-access-create'){
+      if(b.confirmed!=='on')throw new Error('Periksa biodata dan kategori staf terlebih dahulu.');
+      const rawCode=b.code ? b.code.replace(/[^A-Za-z0-9]/g,'').toUpperCase() : '';
+      const code=rawCode && rawCode.length>=8 ? rawCode : newStaffCode();
+      const result=await request('/staff',{name:b.name,role:b.role,phone:b.phone||'',notes:b.notes||'',code,confirmed:true,idempotencyKey:crypto.randomUUID()},state.csrf);
+      ui.staffFormOpen=false;ui.staffAccessResult={...result,code};values['staff-access-create']={};await refresh();ui.staffFocus='.staff-code-result';
+      notify('Staf disimpan. Salin kode unik sebelum menyembunyikannya.');
+    }
+    else if(kind==='staff-delete'){
+      await request('/staff/'+b.id+'/delete',{confirmed:b.confirmed==='on'},state.csrf);
+      ui.staffDelete=null;ui.staffAccessResult=null;await refresh();notify('Staf dihapus. Kode dan seluruh sesinya sudah dicabut.');
     }
     else if(kind==='staff-code-revoke'){
       const r=await request('/staff-invites/'+b.id+'/revoke',{confirmed:b.confirmed==='on'},state.csrf);ui.staffInviteRevoke=null;await refresh();
@@ -213,6 +226,7 @@ document.addEventListener('submit',async event=>{
         ui.displayFocus=ui.displayLink?'.display-link-result':'#display-management-title';await refresh();notify(result.status==='active'?'Tautan layar dibuat. Simpan sebelum meninggalkan halaman.':'Akses sebelumnya sudah tidak aktif. Buat tautan baru.');
       }catch(error){if(error.status>=400&&error.status<500)ui.displayCreatePending=null;throw error;}
     }
+    else if(kind==='staff-extract'){const result=await request('/extractions',{text:b.text},state.csrf);ui.staffReview=result.items;ui.staffReviewRevision=result.catalogRevision;values['staff-review']={label:'',channel:'takeaway'};}
     else if(kind==='kitchen-new'){ui.kitchenFocus={queue:true};await durable('kitchenCreate','/kitchen/orders',{label:b.label,channel:b.channel,items:Array.from({length:Math.min(20,Number(b.itemCount)||1)},(_,i)=>({id:b['menuId-'+i],qty:Number(b['qty-'+i]),note:b['note-'+i]||''})),catalogRevision:state.catalogRevision,idempotencyKey:kitchenKey()},'Pesanan dapur: '+b.label);}
     else if(kind==='kitchen-command'){ui.kitchenFocus={command:true};await runKitchenCommand(b.text);values['kitchen-command']={};}
     else if(kind==='kitchen-discard'){ui.kitchenFocus={queue:true};await durable('kitchenChange',`/kitchen/orders/${b.orderId}/actions`,{action:'discard',revision:Number(b.revision),confirmed:b.confirmed==='on',...kitchenWaste(b),idempotencyKey:crypto.randomUUID()},'Penutupan bahan terpakai');ui.kitchenDiscard=null;}
@@ -239,14 +253,33 @@ document.addEventListener('submit',async event=>{
   finally{if(!state)clearVoice();busy=false;render();if(error&&state)showFormError(kind,error,kind==='kitchen-station'?b.station:undefined);}
 });
 document.addEventListener('click',async event=>{
+  const toggle=event.target.closest('.password-toggle');
+  if(toggle){
+    event.preventDefault();
+    const wrap=toggle.closest('.password-input-wrap');
+    const input=wrap?.querySelector('input');
+    if(input){
+      const isPass=input.type==='password';
+      input.type=isPass?'text':'password';
+      toggle.setAttribute('aria-label',isPass?'Sembunyikan kata sandi':'Lihat kata sandi');
+      toggle.innerHTML=icon(isPass?'eye-off':'eye');
+      input.focus();
+    }
+    return;
+  }
   const b=event.target.closest('[data-action]');if(!b)return;event.preventDefault();const action=b.dataset.action;if(action==='kitchen-listen'&&ui.kitchenHandsfree){clearVoice();render();return;}if(busy)return;
   if(isStaff()){const focused=staffFocusBefore();if(focused)ui.staffRestoreFocus=focused;}
   if(action==='staff-new-order'||action==='staff-queue'){
-    const target=action==='staff-new-order'?(document.querySelector('[data-form="kitchen-new"] [name="label"]')||document.querySelector('#staff-order-entry')):document.querySelector('#kitchen-queue-title');
+    const target=action==='staff-new-order'?(document.querySelector('[data-form="staff-extract"] [name="text"]')||document.querySelector('#staff-order-entry')):document.querySelector('#kitchen-queue-title');
     if(target){target.focus({preventScroll:true});const header=document.querySelector('.staff-shell .topbar');scrollBy({top:target.getBoundingClientRect().top-(header?.getBoundingClientRect().bottom||0)-32,behavior:'instant'});}ui.staffRestoreFocus=null;return;
   }
   if(['show-login','show-register','show-staff-code','show-recover'].includes(action)){ui.auth=action==='show-login'?'login':action==='show-staff-code'?'staff':action==='show-recover'?'recover':'register';ui.error='';render();return;}
   if(action==='create-community'||action==='join-community'){ui.joining=action==='join-community';render();return;}
+  if(action==='staff-add'){ui.staffFormOpen=true;ui.staffAccessResult=null;render();document.querySelector('[data-form="staff-access-create"] [name="name"]')?.focus();return;}
+  if(action==='staff-add-cancel'){ui.staffFormOpen=false;values['staff-access-create']={};render();document.querySelector('[data-action="staff-add"]')?.focus();return;}
+  if(action==='staff-access-hide'){ui.staffAccessResult=null;render();document.querySelector('#staff-management-title')?.focus();return;}
+  if(action==='staff-delete-review'){const target=state?.staff?.find(a=>a.id===b.dataset.id);if(target){ui.staffDelete=target;render();document.querySelector('[data-form="staff-delete"] input[name="confirmed"]')?.focus();}return;}
+  if(action==='staff-delete-cancel'){ui.staffDelete=null;render();return;}
   if(action==='theme'){const theme=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=theme;try{localStorage.setItem('gerai-theme',theme);}catch{}if(!state)render();return;}
   if(['staff-invite-review','staff-code-cancel','staff-code-hide','staff-code-copy','staff-code-revoke','staff-code-cancel-revoke'].includes(action)){
     if(!state||isStaff())return;
@@ -289,14 +322,14 @@ document.addEventListener('click',async event=>{
   if(action.startsWith('voice-')){
     if(action==='voice-cancel'){voice.cancel();notify('Suara dibatalkan. Catatan yang kamu ketik tetap tersedia.');return;}
     if(action==='voice-stop'){voice.stop();return;}
-    if(!connected||pendingAction||route()!=='pesanan')return;
+    if(!connected||pendingAction||(!isStaff()&&route()!=='pesanan'))return;
     if(action==='voice-start'&&state.speech?.available){await voice.start();return;}
     if(action==='voice-use'&&voice.state.phase==='review'){
-      const text=voice.state.text.trim(),before=values.extract?.text||'';
+      const staff=isStaff()&&state.account.role==='cashier',key=staff?'staff-extract':'extract',text=voice.state.text.trim(),before=values[key]?.text||'';
       if(!text){notify('Periksa hasil ucapan terlebih dahulu.');return;}
       const combined=before.trim()?before.trim()+'\n'+text:text;
       if(combined.length>2000){notify('Gabungan teks melebihi 2.000 karakter. Ringkas catatan sebelum menambahkan hasil suara.');return;}
-      values.extract={...values.extract,text:combined};clearVoice();render();document.querySelector('#order-text')?.focus();return;
+      values[key]={...values[key],text:combined};clearVoice();render();document.querySelector(staff?'#staff-order-text':'#order-text')?.focus();return;
     }
     return;
   }
@@ -317,6 +350,23 @@ document.addEventListener('click',async event=>{
   }
   if(action==='close-usage-review'){ui.usageReview=null;values['usage-decision']={};render();return;}
   if(action==='manual-order'){clearVoice();ui.review=[{id:state.menu[0].id,qty:1,note:''}];ui.reviewRevision=state.catalogRevision;ui.reviewId=null;ui.extractionReason='Input manual. Periksa menu, jumlah dan resep sebelum konfirmasi.';render();return;}
+  if(action==='staff-manual-order'){ui.staffReview=[{id:state.menu[0]?.id,qty:1,note:''}];ui.staffReviewRevision=state.catalogRevision;values['staff-review']={label:'',channel:'takeaway'};render();return;}
+  if(action==='staff-back-order'){ui.staffReview=null;render();return;}
+  if(action==='staff-submit-queue'||action==='staff-direct-sale'){
+    if(!ui.staffReview?.length)return;
+    const review=values['staff-review']||{},items=structuredClone(ui.staffReview);
+    if(items.some(i=>!i.id||!Number.isInteger(Number(i.qty))||Number(i.qty)<1))return notify('Periksa menu dan jumlah setiap item.');
+    busy=true;lockControls();
+    try{
+      if(action==='staff-submit-queue'){
+        if(!review.label?.trim())throw new Error('Isi label pesanan atau meja.');
+        await durable('kitchenCreate','/kitchen/orders',{label:review.label.trim(),channel:review.channel||'takeaway',items,catalogRevision:ui.staffReviewRevision,idempotencyKey:kitchenKey()},'Pesanan dapur: '+review.label.trim());
+      }else{
+        await request('/transactions',{items,catalogRevision:ui.staffReviewRevision,idempotencyKey:kitchenKey()},state.csrf);await refresh();notify('Penjualan langsung tercatat.');
+      }
+      ui.staffReview=null;values['staff-extract']={};values['staff-review']={};
+    }catch(err){notify(err.message);}finally{busy=false;render();}return;
+  }
   if(action==='back-order'){ui.review=null;render();return;}
   if(action==='add-order'){ui.review.push({id:state.menu[0].id,qty:1,note:''});ui.reviewId=null;render();return;}
   if(action==='remove-order'){if(ui.review.length>1)ui.review.splice(Number(b.dataset.index),1);ui.reviewId=null;render();return;}
@@ -345,7 +395,7 @@ document.addEventListener('click',async event=>{
   }catch(err){if(err.transport)connected=false;if(err.status===401){clearDisplaySecrets();state=null;ui.auth='login';ui.error='Masuk lagi untuk melanjutkan.';}notify(err.message);}
   finally{if(!state)clearVoice();busy=false;render();}
 });
-window.addEventListener('hashchange',()=>{clearStaffPairing();ui.staffCreateKey=null;ui.staffCreateMeta=null;ui.staffEdit=null;ui.displayEpoch=(ui.displayEpoch||0)+1;ui.displayLink=null;ui.displayCreatePending=null;ui.displayRevoke=null;clearVoice();ui.mobile=false;render();scrollTo(0,0);});
+window.addEventListener('hashchange',()=>{clearStaffPairing();ui.staffAccessResult=null;ui.staffDelete=null;ui.staffFormOpen=false;ui.staffCreateKey=null;ui.staffCreateMeta=null;ui.staffEdit=null;ui.displayEpoch=(ui.displayEpoch||0)+1;ui.displayLink=null;ui.displayCreatePending=null;ui.displayRevoke=null;clearVoice();ui.mobile=false;render();scrollTo(0,0);});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&ui.mobile){ui.mobile=false;render();document.querySelector('[data-action="menu"]')?.focus();}});
 window.addEventListener('gerai:connection-lost',()=>{clearVoice();connected=false;});
 window.addEventListener('offline',()=>{clearVoice();connected=false;if(state)render();});

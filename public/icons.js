@@ -6,6 +6,8 @@ const paths = {
   box: '<path d="m12 3 9 5v8l-9 5-9-5V8l9-5Z"/><path d="m3 8 9 5 9-5M12 13v8M7.5 5.5l9 5"/>',
   trend: '<path d="m3 17 6-6 4 4 8-10M15 5h6v6"/>',
   people: '<circle cx="9" cy="7" r="3"/><path d="M2 20v-2a6 6 0 0 1 12 0v2M16 4a3 3 0 0 1 0 6M17 14a5 5 0 0 1 5 5v1"/>',
+  screen: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  basket: '<path d="M4 9h16l-1.5 11h-13L4 9Z"/><path d="m8 9 4-6 4 6M8 13v3M12 13v3M16 13v3"/>',
   leaf: '<path d="M20 3c-10 0-17 3-17 10a7 7 0 0 0 7 7c7 0 10-7 10-17ZM5 19 16 8"/>',
   history: '<path d="M3 11a9 9 0 1 1 2 7M3 4v7h7M12 7v5l3 2"/>',
   arrow: '<path d="M4 12h16m-6-6 6 6-6 6"/>',
@@ -25,6 +27,8 @@ const paths = {
   warning: '<path d="m12 3 10 18H2L12 3ZM12 9v5M12 17h.01"/>',
   wallet: '<rect x="3" y="6" width="18" height="15" rx="2"/><path d="M3 6V4a1 1 0 0 1 1-1h13v3M16 12h5v4h-5v-4Z"/>',
   receipt: '<path d="M5 3v18l3-2 4 2 4-2 3 2V3H5ZM9 7h6M9 11h6M9 15h3"/>',
-  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  eye: '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  'eye-off': '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>'
 };
 export function icon(name, cls = '') { return `<svg class="icon ${cls}" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.info}</svg>`; }

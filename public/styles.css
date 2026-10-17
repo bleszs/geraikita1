@@ -1150,6 +1150,52 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(229, 160, 127, .25);
 }
 
+.password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.password-input-wrap input {
+  margin-top: 0 !important;
+  padding-right: 44px !important;
+  width: 100%;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  transition: color .15s ease, background-color .15s ease;
+  z-index: 2;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--ink);
+  background: var(--tint);
+  outline: none;
+}
+
+.password-toggle .icon {
+  width: 20px;
+  height: 20px;
+}
+
 textarea {
   resize: vertical;
   line-height: 1.6;
@@ -3652,15 +3698,48 @@ dialog p {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
   color: var(--muted);
   font-size: 14px;
+  flex-wrap: wrap;
+}
+
+.auth-switch-link {
+  margin-top: 14px;
 }
 
 .auth-switch-btn {
   font-size: 13px;
   padding: 8px 16px;
   min-height: 38px;
+}
+
+.auth-text-link {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: color .15s ease, text-decoration .15s ease;
+}
+
+.auth-text-link:hover,
+.auth-text-link:focus-visible {
+  text-decoration: underline;
+  color: var(--accent-hover);
+}
+
+:root[data-theme=dark] .auth-text-link {
+  color: var(--accent);
+}
+
+:root[data-theme=dark] .auth-text-link:hover,
+:root[data-theme=dark] .auth-text-link:focus-visible {
+  color: var(--accent-hover);
 }
 
 .back-nav {
@@ -3836,6 +3915,25 @@ form .notice {
 .action-link {
   margin-top: 2px;
   margin-bottom: 4px;
+}
+
+.staff-meta-line {
+  margin: 4px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  display: block;
+}
+
+.staff-code-badge {
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 2px 8px;
+  background: var(--tint);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--accent);
+  letter-spacing: .06em;
 }
 
 .update-prompt {
@@ -4510,6 +4608,14 @@ form .notice {
     display: none
   }
 }
+
+/* Staff directory and restricted workspaces. */
+.staff-editor,.staff-code-result,.staff-order-review{margin-top:20px;padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.staff-access-list,.staff-menu-list ul{list-style:none;margin:16px 0 0;padding:0}.staff-access-list>li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;padding:18px 0;border-top:1px solid var(--line)}
+.staff-access-list small{display:block;color:var(--muted);margin-top:4px}.staff-access-list details{margin-top:10px}.staff-code-value{font-size:22px;font-weight:800;letter-spacing:3px}
+.staff-menu-list{margin:16px 0}.staff-menu-list li{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid var(--line)}.staff-voice{margin-top:16px}.staff-order-review .kitchen-item-fields{margin-top:12px}
+.staff-shell [data-action="kitchen-action"][data-step="void"],.staff-shell [data-action="kitchen-action"][data-step="open-void"]{display:none}
+@media(max-width:680px){.staff-access-list>li{grid-template-columns:1fr}.staff-menu-list li{align-items:flex-start;flex-direction:column;gap:4px}}
 
 /* Kitchen capacity, waste, catalog inbox and wait estimates. */
 .kitchen-station{border-top:1px solid var(--line);padding-top:18px;margin-top:18px}.kitchen-station h3{font-size:18px;margin:0 0 4px;overflow-wrap:anywhere}.kitchen-station>p{margin:0 0 8px}.kitchen-waste{border:0;padding:0;margin:14px 0;min-width:0}.kitchen-waste legend{font-weight:700;padding:0}.kitchen-waste>p{margin:4px 0 8px}.kitchen-task.is-voided strong{text-decoration:line-through;color:var(--muted)}.kitchen-priorities strong small{font-weight:600;margin-left:6px}

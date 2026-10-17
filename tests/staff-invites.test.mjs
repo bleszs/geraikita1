@@ -61,3 +61,11 @@ test('staff-code attempts are bounded per source across changing guesses and val
  assert.equal((await f.post('/auth/staff-code',{code:'ABCD2345'})).status,429);
  assert.equal(f.app.store.get('SELECT used_at FROM staff_invites').used_at,null);
 });
+
+test('persistent staff code survives repeated logins and is revoked only when owner deletes the staff profile',t=>{
+ const {store,identity,owner}=fixture(t),code='QRST2345',created=identity.createStaffAccess(owner,{name:'Kasir tetap',role:'cashier',phone:'0812345',notes:'Shift pagi',code,confirmed:true,idempotencyKey:randomUUID()});
+ assert.equal(created.hasAccessCode,true);assert.equal(identity.staff(owner).find(x=>x.id===created.id).phone,'0812345');
+ const first=identity.loginStaffCode({code}),second=identity.loginStaffCode({code:'qrst-2345'});assert.equal(first.account_id,created.id);assert.equal(second.account_id,created.id);
+ assert.equal(JSON.stringify(store.all('SELECT * FROM staff_access_codes')).includes(code),false);
+ identity.deleteStaff(owner,created.id,{confirmed:true});assert.equal(identity.resolve(first.id),undefined);assert.equal(identity.resolve(second.id),undefined);assert.throws(()=>identity.loginStaffCode({code}),/Kode/);assert.equal(identity.staff(owner).some(x=>x.id===created.id),false);
+});

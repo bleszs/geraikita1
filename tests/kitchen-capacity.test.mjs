@@ -167,6 +167,6 @@ test('HTTP: owner sets capacity; kitchen voids with full waste only; cashier can
  assert.equal((await post(cashier,`/kitchen/orders/${id}/actions`,{action:'void',taskId:a.id,revision:1,idempotencyKey:prefix(cashier)+randomUUID()})).status,403);
  assert.equal((await post(kitchen,`/kitchen/orders/${id}/actions`,{action:'start',taskId:a.id,revision:1,idempotencyKey:prefix(kitchen)+randomUUID()})).status,200);
  assert.equal((await post(kitchen,`/kitchen/orders/${id}/actions`,{action:'void',taskId:a.id,revision:2,confirmed:true,wasted:{[p.id]:0},idempotencyKey:prefix(kitchen)+randomUUID()})).status,403);
- assert.equal((await post(kitchen,`/kitchen/orders/${id}/actions`,{action:'void',taskId:a.id,revision:2,confirmed:true,idempotencyKey:prefix(kitchen)+randomUUID()})).status,200);
- const after=svc.bootstrap(s);close(after.stock[p.id],1000-a.qty*10);close(after.availableStock[p.id],1000-a.qty*10-b.qty*10);
+ assert.equal((await post(kitchen,`/kitchen/orders/${id}/actions`,{action:'void',taskId:a.id,revision:2,confirmed:true,idempotencyKey:prefix(kitchen)+randomUUID()})).status,403);
+ const after=svc.bootstrap(s);close(after.stock[p.id],1000);close(after.availableStock[p.id],1000-a.qty*10-b.qty*10);
 });
