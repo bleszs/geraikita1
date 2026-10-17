@@ -16,7 +16,7 @@ test('role migration preserves every existing table and session; reopen retains 
  const dir=mkdtempSync(join(tmpdir(),'gerai-staff-')),file=join(dir,'test.sqlite');let store=createStore(file);
  t.after(()=>{store.close();rmSync(dir,{recursive:true,force:true});});
  let identity=createIdentity(store);const owner=identity.register(registration());store.db.exec('DROP TABLE staff_actions; DROP TABLE account_roles');
- const tables=store.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").map(x=>x.name);assert.equal(tables.length,29);
+ const tables=store.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").map(x=>x.name);assert.equal(tables.length,31);
  const snapshot=()=>tables.map(name=>[name,store.all(`SELECT * FROM ${name}`).map(r=>JSON.stringify(r)).sort()]);const before=snapshot();store.close();store=createStore(file);identity=createIdentity(store);
  assert.deepEqual(snapshot(),before);assert.equal(identity.resolve(owner.id).role,'owner');assert.equal(store.get('SELECT COUNT(*) AS n FROM account_roles').n,1);
  const a=staffBody(),b=staffBody('kitchen');identity.createStaff(identity.resolve(owner.id),a);const deleted=identity.createStaff(identity.resolve(owner.id),b);const session=identity.login(a),missing=identity.login(b);store.run('DELETE FROM account_roles WHERE account_id=?',deleted.id);

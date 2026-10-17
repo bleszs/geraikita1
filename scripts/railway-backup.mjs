@@ -11,13 +11,16 @@ import {createStore} from '../server/store.mjs';
 
 const MAX_BYTES=64*1024*1024;
 const sha=data=>createHash('sha256').update(data).digest('hex');
-function logicalHash(filename){
+function logicalHash(filename,shape){
   const db=new DatabaseSync(filename,{readOnly:true});
   try{
     db.exec('BEGIN');
-    const tables=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all();
-    const rows=tables.map(({name})=>[name,db.prepare('SELECT * FROM "'+name.replaceAll('"','""')+'"').all().map(r=>JSON.stringify(r)).sort()]);
-    return {tables:tables.length,hash:sha(JSON.stringify(rows))};
+    const quote=name=>'"'+name.replaceAll('"','""')+'"';
+    const tables=shape||db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all().map(({name})=>({name,columns:db.prepare('PRAGMA table_info('+quote(name)+')').all().map(c=>c.name)}));
+    // Additive migrations may create tables/default columns. Every original
+    // column and row must still exist unchanged; missing columns fail closed.
+    const rows=tables.map(({name,columns})=>[name,db.prepare('SELECT '+columns.map(quote).join(',')+' FROM '+quote(name)).all().map(r=>JSON.stringify(r)).sort()]);
+    return {tables:tables.length,shape:tables,hash:sha(JSON.stringify(rows))};
   }finally{db.close();}
 }
 export function saveVerifiedBackup(payload,directory){
@@ -38,7 +41,7 @@ export function saveVerifiedBackup(payload,directory){
     // Open the restored copy with the real store/migrations, then compare every row.
     const store=createStore(restored);store.close();
     inspectDatabase(restored);
-    const after=logicalHash(restored);
+    const after=logicalHash(restored,before.shape);
     if(after.hash!==before.hash||after.tables!==before.tables)throw Error('Restored rows differ from backup.');
     renameSync(partial,filename);
     const report={checkedAt:new Date().toISOString(),filename,bytes:bytes.length,sha256:payload.sha256,

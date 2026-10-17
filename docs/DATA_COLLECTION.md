@@ -1,5 +1,7 @@
 # Mengumpulkan data untuk pelatihan
 
+**Chat/suara berbeda dari histori penjualan.** Qwen/Whisper pralatih perlu dievaluasi dahulu; tidak harus dilatih ulang untuk mulai dipakai. Template chat schema 2 dan [panduan anotasi](CHAT_EVALUATION.md) memisahkan menu/jumlah dari catatan wajib per item. Pesan dan izin harus nyata; fixture otomatis bukan pengganti. [Keputusan pelatihan](AI_TRAINING_DECISIONS.md).
+
 Dataset nyata publik FreshRetailNet-50K sudah ditemukan dan dipakai melatih 500 model Ridge serta satu model gabungan boosting; lihat evaluation/AI_MODEL_INDEX.md. Pengumpulan dataset pribadi bukan lagi prasyarat eksperimen publik tersebut. Panduan ini khusus untuk validasi/pelatihan akun usaha sendiri. Mulai dari catatan nyata; jangan mengisi 84 hari dengan angka buatan. Batas 84 hari adalah kebutuhan protokol awal proyek, bukan aturan semua model AI selalu memerlukan jumlah tersebut.
 
 ## Apa yang dicatat

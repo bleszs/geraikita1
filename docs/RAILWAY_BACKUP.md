@@ -19,7 +19,7 @@ Backup terkelola Railway juga belum tersedia pada kuota akun saat pemeriksaan (`
 1. CLI memeriksa akun Railway sesuai konfigurasi lokal, serta layanan dan environment benar-benar berada pada proyek yang dipilih. Deployment yang sedang berjalan dicari ulang setiap run, sehingga ID instance lama tidak dipakai setelah redeploy.
 2. SSH membuat snapshot SQLite konsisten dengan `VACUUM INTO` di direktori sementara container. Snapshot menyertakan data WAL yang sudah committed. File sementara tersebut dihapus sesudah transfer; tidak menambah backup permanen pada volume cloud.
 3. Unduhan dibatasi 64 MiB, diperiksa panjang, representasi base64 dan SHA-256. File baru memakai nama unik serta akhiran `.partial` sampai pemeriksaan selesai.
-4. Integritas SQLite dan foreign key diperiksa. Salinan pemulihan dibuka melalui store/migrasi aplikasi pada folder sementara laptop, kemudian seluruh nilai tabel dibandingkan dengan snapshot. Salinan sementara dibuang, sedangkan unduhan baru diterbitkan sebagai `.sqlite` dengan laporan `.json` pendamping.
+4. Integritas SQLite dan foreign key diperiksa. Salinan pemulihan dibuka melalui store/migrasi aplikasi pada folder sementara laptop, kemudian seluruh kolom/baris yang ada pada snapshot asal dibandingkan dengan hasil migrasi salinan. Tabel/kolom bawaan baru diperbolehkan tanpa mengabaikan perubahan data asal. Salinan sementara dibuang; unduhan yang diterbitkan sebagai `.sqlite` beserta laporan `.json` tetap mempertahankan schema dan checksum asal.
 
 Tidak ada penghapusan retensi otomatis. Backup lama dipertahankan saat run baru gagal. Periksa kapasitas disk secara berkala; file backup berisi data akun dan usaha, sehingga harus tetap disimpan privat. Audio, model AI dan draft offline browser tidak termasuk backup SQLite.
 

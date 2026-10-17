@@ -1,3 +1,42 @@
+# Lanjutan v0.49 — pemeriksaan jumlah dan waktu tunggu AI
+
+- [x] Tutup celah angka tersisa: input seperti dua belas yang terbaca dua, jumlah bertanda negatif/positif sebelum menu, serta angka menu lain yang tersembunyi di catatan ditolak untuk pemeriksaan manual.
+- [x] Pemeriksaan tidak menebak variasi numerik yang belum mempunyai schema katalog. Level pedas/harga/nomor meja dalam chat perlu diperiksa manual; kolom label, jumlah dan catatan tetap dapat dipakai.
+- [x] Perbaiki batas tunggu klien `/kitchen/extractions` dari 15 menjadi 60 detik agar tidak lebih singkat daripada batas inferensi model 45 detik. Endpoint ekstraksi lama tetap 60 detik, request biasa tetap 15 detik; cache PWA diperbarui.
+- [x] Tes kontrak memastikan input tidak valid tidak mencapai model, reservasi kuota dikembalikan, serta stok/penjualan/antrean tidak berubah pada pemilik/kasir. Kasus valid, alias bernomor, catatan teks dan jalur manual tetap diuji.
+- [x] **305 tes backend + 63 browser = 368 lulus**; delapan pemeriksaan Qwen/Whisper asli juga lulus. Satu tes browser lama sempat gagal menunggu toast, kemudian lulus saat diuji sendiri dan seluruh 63 tes browser lulus pada pengulangan penuh. [Regresi](evaluation/ai-quantity-release.json), [runtime](evaluation/ai-quantity-runtime.json).
+- [ ] Evaluasi akurasi lapangan dan kebutuhan fine-tuning tetap menunggu data pesanan usaha berizin; perbaikan validasi/timeout bukan training atau bukti akurasi baru.
+
+[Perubahan perilaku dan cara mencoba](AI_QUANTITY_VALIDATION.md).
+
+# Lanjutan v0.48 — catatan pesanan dan evaluasi AI
+
+- [x] Perjelas kebutuhan training per komponen: Qwen/Whisper pralatih; eksperimen Ridge/boosting dilatih dari sumber publik; aturan antrean/kuota bukan model terlatih. Tidak ada bobot baru atau fine-tuning pada tahap ini. [Keputusan pelatihan](AI_TRAINING_DECISIONS.md).
+- [x] Perbaiki hilangnya catatan di luar daftar kata kunci. Kata yang tersisa di luar pasangan menu/jumlah membuat pesan asli dipertahankan untuk review, termasuk hangat/dingin/gula sedikit. Catatan >500 karakter ditolak ke input manual tanpa pemotongan diam-diam; penempatan per item tetap perlu diperiksa pengguna.
+- [x] Evaluator schema 2 menilai menu/jumlah dan retensi fragmen catatan secara terpisah; anotasi kosong/hilang tidak menghasilkan skor retensi palsu. Kompatibel schema 1, dengan cakupan anotasi eksplisit dan denominator error/penolakan tetap dipertahankan.
+- [x] Catatan hasil dan fragmen anotasi dinilai dalam memori lalu dihapus dari laporan, diganti hitungan/panjang/hash. Protokol menyimpan versi schema dan kebijakan metrik. Template tetap kosong; tidak membuat chat bisnis buatan untuk benchmark.
+- [x] Delapan belas tes kontrak chat lulus, termasuk redaksi, anotasi parsial, modifier tak terdaftar, catatan terlalu panjang, fallback dan CLI. Uji Qwen/Whisper nyata kembali lulus tujuh pemeriksaan HTTP dengan catatan tambahan tetap sampai antrean dapur; bukan evaluasi akurasi lapangan.
+- [x] Regresi lengkap **302 tes backend + 62 browser = 364 lulus**, `npm test` exit 0. [Bukti regresi](evaluation/ai-notes-release.json), [uji model asli](evaluation/ai-notes-runtime.json). Belum di-push atau dideploy pada tahap ini.
+- [ ] Evaluasi chat/rekaman pesanan usaha Indonesia berizin dan berlabel belum dapat dijalankan: data tersebut belum tersedia. Infrastruktur evaluasi selesai bukan berarti item ini selesai.
+- [ ] Tentukan kebutuhan fine-tuning setelah melihat pola kesalahan pada data pengembangan nyata, dengan test terpisah; jangan melatih atau mengubah bobot sekadar agar disebut AI.
+
+# Lanjutan v0.47 — paket adil dan AI ke dapur
+
+- [x] Paket Mulai tanpa batas sepuluh menu; pencatatan manual, stok dan keikutsertaan kulakan tetap terbuka. Pengaturan menampilkan kuota dari penggunaan nyata per usaha, dibagi staf dan direset menurut bulan Jakarta. Nilai percobaan 100 ekstraksi/30 transkripsi dapat diatur melalui environment.
+- [x] Kuota persisten dengan reservasi atomik, pengembalian untuk kegagalan/fallback dan kedaluwarsa reservasi terputus. Dua endpoint ekstraksi berbagi kuota; setelah habis parser lokal tetap tersedia dengan label yang jelas. Suara mengarahkan pengguna ke input manual.
+- [x] Kebutuhan paket tambahan tersimpan atas persetujuan pemilik, tanpa menagih atau mengaktifkan paket palsu. Tumbuh/Jaringan dan fitur cabang/mitra masih ditandai rencana.
+- [x] **Prioritas utama: chat/suara → ekstraksi → formulir pemeriksaan → antrean dapur** tersedia bagi pemilik/kasir. Pengguna mengoreksi menu, porsi, catatan, label dan sumber sebelum mengirim. Ekstraksi tidak mengubah stok/penjualan. Katalog berubah dan sesi dicabut ditolak; pengiriman dapur tetap idempoten.
+- [x] Model hanya menerima ID/nama/alias katalog usahanya. Kasir tidak memperoleh resep atau pengaturan paket. Hasil baru yang gagal tidak menghapus formulir sebelumnya dan diberi penjelasan.
+- [x] Verifikasi lokal Qwen 1.5B/Whisper asli lulus tujuh pemeriksaan HTTP, termasuk pesanan selesai sekali dan penggunaan kuota; seluruhnya SQLite memori. Bukan benchmark akurasi atau aktivasi Qwen cloud. [Bukti](evaluation/plans-kitchen-ai-runtime.json).
+- [x] Regresi lengkap: **294 tes Node + 62 tes browser = 356 lulus**, `npm test` exit 0. Backend 294 tes diulang setelah penyesuaian pengembalian kuota pada konflik katalog/sesi; exit 0. [Ringkasan validasi](evaluation/plans-kitchen-ai-release.json).
+- [x] Panduan berpanah v9 menambah topik paket dan pesanan AI (20 topik/99 langkah). Review tampilan pemilik/kasir/paket pada desktop, ponsel dan gelap mendapat verdict **ship** pada lingkup perluasan ini. [Review](evaluation/PLANS_KITCHEN_AI_UI_REVIEW.md).
+- [x] Perbaikan temuan sebelumnya: kode pemulihan dibersihkan saat akun/navigasi berubah; penghitung percobaan login/pemulihan menormalkan spasi/email; verifier backup mendukung migrasi aditif sambil memeriksa seluruh baris/kolom asal.
+- [ ] Tetapkan kuota/harga dari uji kebutuhan dan biaya nyata; pembayaran, aktivasi langganan, penambahan kapasitas berbayar dan koordinasi jaringan belum tersedia.
+- [ ] **Prioritas berikut:** uji pesanan Bahasa Indonesia berizin pada Qwen/Whisper, ukur kesalahan menu/jumlah/variasi, penolakan dan waktu proses; tingkatkan cakupan hanya jika pemeriksaan aman dan evaluasi mendukungnya. Jalur konservatif sekarang tetap dapat menolak chat ambigu.
+- [ ] Uji demo ujung ke ujung dengan pengguna awam/perangkat nyata dan kondisi bising; lanjutkan validasi ramalan pada histori usaha berizin. Tidak melatih model dari akun simulasi.
+
+[Cara mencoba, konfigurasi dan batas](PLANS_AND_KITCHEN_AI.md). Status ini adalah pekerjaan lokal; belum menyatakan perubahan sudah di-push atau dideploy ke Railway.
+
 # Lanjutan v0.46 — pemantauan perubahan pola pemakaian (drift)
 
 - [x] Aturan tinjauan drift (`median-level-shift-review-v1`) di `server/ml/usage-drift.mjs`: membandingkan median jendela terakhir (14 hari) dengan baseline sebelumnya (28 hari) secara robust (median+MAD, ambang modified-z 3,5 dan lantai relatif 25%), sehingga lonjakan satu hari tidak memicu sinyal. Bukan model terlatih, tanpa atribusi sebab (libur/cuaca), tanpa koreksi/retraining otomatis.

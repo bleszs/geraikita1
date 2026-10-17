@@ -1,5 +1,7 @@
 # Pelatihan forecasting Gerai Kita
 
+Untuk pertanyaan “semua AI harus dilatih ulang?”, lihat [keputusan per model](AI_TRAINING_DECISIONS.md). Qwen/Whisper aplikasi masih pralatih; panduan ini membahas fitting dan evaluasi **ramalan**, bukan fine-tuning model bahasa/suara.
+
 V0.24 mengevaluasi tiga profil ASR pretrained pada 16 validation/24 test baru. Base pinned dipilih dari validation; WER test 36,99% vs Tiny current 86,59%, sementara Tiny pinned 97,36%. Audit dan pengulangan terbatas lulus, tetapi bukan validasi perbaikan variasi atau suara pesanan. Tidak ada training/aktivasi baru; forecasting tetap 504 Ridge dan dua boosting. [Hasil](evaluation/ASR_PROFILE_RESULTS.md), [metode](ASR_PROFILES.md).
 V0.23: 68 inferensi diagnostik tambahan dan 112 pemeriksaan kernel; perubahan pertama pada intervensi OpenBLAS ditemukan di proyeksi mel. Pengulangan baru cocok, tetapi penyebab variasi historis konfigurasi tetap dan perbaikannya belum terbukti. Tidak ada model terlatih atau skor akurasi baru. [Hasil/batas](evaluation/ASR_FOLLOWUP_RESULTS.md).
 

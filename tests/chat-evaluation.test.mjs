@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync, realpathSync } from '
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { requestModelItems, createExtractor } from '../server/extractor.mjs';
+import { requestModelItems, createExtractor,parseOrder } from '../server/extractor.mjs';
 import { validateChatDataset, evaluateChats, summarizeChat } from '../scripts/chat-evaluation.mjs';
 
 // Mathematical/contract fixtures only; never loaded into the application database.
@@ -121,4 +121,110 @@ test('chat CLI refuses missing data, writes only private evaluation artifacts an
     assert.ok(path.basename(resolved).startsWith('gerai-chat-contract-'));
     rmSync(resolved, { recursive: true, force: true });
   }
+});
+
+const annotatedFixture = (text='produk uji 2 tanpa gula',fragments=['tanpa gula']) => {
+  const data=fixture();data.schemaVersion=2;data.records=data.records.slice(0,1);
+  data.records[0].text=text;data.records[0].expected.items[0].requiredNoteFragments=fragments;return data;
+};
+
+test('schema 2 requires explicit per-item note annotations and rejects invented or duplicate evidence',()=>{
+  assert.equal(validateChatDataset(annotatedFixture()).schemaVersion,2);
+  for(const fragments of [undefined,null,'tanpa gula',[''],['lebih manis'],['tanpa gula',' TANPA   GULA ']]){
+    const data=annotatedFixture();data.records[0].expected.items[0].requiredNoteFragments=fragments;
+    assert.throws(()=>validateChatDataset(data),/requiredNoteFragments|Fragmen/);
+  }
+  assert.equal(validateChatDataset(annotatedFixture('produk uji 2',[])).records.length,1);
+  const old=fixture();assert.equal(validateChatDataset(old).schemaVersion,1);
+});
+
+test('note retention is separate from item accuracy and reports missing modifiers instead of silently scoring success',async()=>{
+  const report=await evaluateChats(annotatedFixture('produk uji 2 dingin',['dingin']),{provider:'ollama',fetcher:async()=>response({items:[{id:'menu1',qty:2}]})});
+  const score=report.metrics.rawModel;
+  assert.equal(score.exactMatchRate,1);assert.equal(score.requiredNotes.retentionRate,0);
+  assert.equal(score.requiredNotes.acceptedOrdersWithMissingNotes,1);
+  assert.equal(score.requiredNotes.menuQuantityAndRequiredNotesMatchRate,0);
+  assert.equal(report.rows[0].rawModel.noteReview.retainedFragments,0);
+  assert.equal(report.metrics.pipeline.requiredNotes.retentionRate,1);
+});
+
+test('unlisted modifiers survive both parser and real pipeline without assigning invented per-item instructions',async()=>{
+  for(const modifier of ['dingin','gula sedikit','hangat','alergi kacang','es terpisah']){
+    const text='produk uji 2 '+modifier,parser=parseOrder(text,menu);
+    assert.equal(parser[0].note,text);
+    const extractor=createExtractor({fetcher:async()=>response({items:[{id:'menu1',qty:2}]})});
+    const result=await extractor.extract(text,menu);assert.equal(result.mode,'ollama');assert.equal(result.items[0].note,text);
+  }
+  assert.equal(parseOrder('produk uji 2',menu)[0].note,'');
+  const long='produk uji 2 '+ 'catatan '.repeat(70);
+  assert.throws(()=>parseOrder(long,menu),/500 karakter/); // No silent truncation of the final instruction.
+  const multiple=[...menu,{id:'second-isolated-menu',name:'Minuman uji',aliases:['minuman uji']}];
+  const source='produk uji 2 dingin, minuman uji 1 hangat';
+  assert(parseOrder(source,multiple).every(i=>i.note===source)); // Full source for review; scope is not inferred.
+});
+
+test('reports assess notes in memory without copying chat text or annotations into any engine output',async()=>{
+  const data=annotatedFixture('produk uji 2 tanpa gula identitas-yang-tidak-boleh-disalin',['tanpa gula']);
+  data.records[0].expected.privateLabel='internal-label-must-not-leak';
+  const report=await evaluateChats(data,{provider:'ollama',fetcher:async()=>response({items:[{id:'menu1',qty:2}]})});
+  const serialized=JSON.stringify(report);
+  for(const secret of [data.records[0].text,'tanpa gula','identitas-yang-tidak-boleh-disalin','internal-label-must-not-leak','private-record-a','private-thread-a'])assert.equal(serialized.includes(secret),false,secret);
+  assert.equal(report.metrics.pipeline.requiredNotes.retentionRate,1);
+  assert.equal(report.metrics.rawModel.requiredNotes.retentionRate,0); // Raw items schema has no note field.
+  assert.equal(report.rows[0].parser.items[0].noteLength,data.records[0].text.length);
+  assert.match(report.rows[0].parser.items[0].noteSha256,/^[a-f0-9]{64}$/);
+});
+
+test('unannotated and empty-required-note datasets never manufacture a note retention rate',async()=>{
+  const legacy=await evaluateChats(fixture(),{provider:'rules'});
+  assert.equal(legacy.metrics.pipeline.requiredNotes.status,'not_annotated');
+  assert.equal(legacy.metrics.pipeline.requiredNotes.retentionRate,null);
+  assert.equal(legacy.metrics.pipeline.requiredNotes.menuQuantityAndRequiredNotesMatchRate,null);
+  const noNotes=await evaluateChats(annotatedFixture('produk uji 2',[]),{provider:'rules'});
+  assert.equal(noNotes.metrics.pipeline.requiredNotes.retentionRate,null);
+  assert.equal(noNotes.metrics.pipeline.requiredNotes.menuQuantityAndRequiredNotesMatchRate,1);
+});
+
+test('rejected and failed cases remain in note denominators; model failure cannot masquerade as correct review',async()=>{
+  const data=annotatedFixture('jangan produk uji 2 tanpa gula',['tanpa gula']);
+  const report=await evaluateChats(data,{provider:'ollama',fetcher:async()=>{throw Error('Unavailable technical double');}});
+  for(const engine of ['parser','rawModel','pipeline']){
+    assert.equal(report.metrics[engine].requiredNotes.retentionRate,0);
+    assert.equal(report.metrics[engine].requiredNotes.menuQuantityAndRequiredNotesMatchRate,0);
+  }
+  assert.equal(report.metrics.rawModel.errors,1);assert.equal(report.metrics.pipeline.rejectedClearOrders,1);
+});
+
+test('partial annotations expose coverage and never qualify as a fully checked order',async()=>{
+  const data=annotatedFixture();data.menu.push({id:'second-isolated-menu',name:'Minuman uji',aliases:['minuman uji']});
+  data.schemaVersion=1;data.records[0].text='produk uji 2 tanpa gula, minuman uji 1';
+  data.records[0].expected.items.push({id:'second-isolated-menu',qty:1});
+  const report=await evaluateChats(data,{provider:'rules'}),score=report.metrics.pipeline.requiredNotes;
+  assert.equal(score.annotatedOrders,1);assert.equal(score.fullyAnnotatedOrders,0);assert.equal(score.annotationCoverageRate,0);
+  assert.equal(score.menuQuantityAndRequiredNotesMatchRate,null);
+});
+
+test('CLI writes a private note-aware report without leaking source notes and never needs application storage',()=>{
+  const directory=mkdtempSync(path.join(tmpdir(),'gerai-chat-contract-'));
+  try{
+    const input=path.join(directory,'notes.json'),out=path.join(directory,'report');
+    writeFileSync(input,JSON.stringify(annotatedFixture()));
+    const result=spawnSync(process.execPath,['scripts/evaluate-chat.mjs','--dataset',input,'--out',out],{encoding:'utf8'});
+    assert.equal(result.status,0,result.stderr);
+    const raw=readFileSync(path.join(out,'report.json'),'utf8'),report=JSON.parse(raw);
+    assert.equal(report.schemaVersion,2);assert.equal(report.datasetSchemaVersion,2);
+    assert.equal(raw.includes('tanpa gula'),false);assert.equal(report.metrics.pipeline.requiredNotes.retentionRate,1);
+  }finally{
+    const resolved=realpathSync(directory);assert.equal(path.dirname(resolved),realpathSync(tmpdir()));assert(path.basename(resolved).startsWith('gerai-chat-contract-'));rmSync(resolved,{recursive:true,force:true});
+  }
+});
+
+test('unmatched numbers cannot hide unknown items behind a numeric modifier or lose part of a spoken quantity',async()=>{
+  const inputs=['produk uji 2 pedas 1 burger','produk uji 2 pedas 3/4','produk uji 2 pedas 3 4','produk uji 2 pedas 3',
+    'produk uji dua belas','produk uji dua puluh','produk uji dua setengah','produk uji 2 pedas ３','-2 produk uji','−2 produk uji','+2 produk uji','– 2 produk uji','produk uji 2-3'];
+  let calls=0;const extractor=createExtractor({fetcher:async()=>{calls++;return response({items:[{id:'menu1',qty:2}]});}});
+  for(const text of inputs){assert.throws(()=>parseOrder(text,menu),undefined,text);await assert.rejects(extractor.extract(text,menu),undefined,text);}
+  assert.equal(calls,0); // Invalid quantity evidence never reaches a model.
+  for(const text of ['produk uji 2 pedas','dua produk uji hangat','produk uji 12','12 produk uji','produk uji 99'])assert.equal(parseOrder(text,menu).length,1);
+  const numericMenu=[{id:'numeric-alias',name:'Produk 12',aliases:['produk 12']}];assert.equal(parseOrder('produk 12 2',numericMenu)[0].qty,2);
 });

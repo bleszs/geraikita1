@@ -31,11 +31,17 @@ export function parseOrder(text, menu = []) {
     for (const match of cleaned.matchAll(pattern)) {
       const span = [match.index, match.index + match[0].length];
       if (occupied.some(([a, b]) => span[0] < b && span[1] > a)) continue;
+      requireValue(!/[-+\u2212\u2013\u2014]\s*$/.test(cleaned.slice(0,match.index)), 'Jumlah bertanda atau rentang belum jelas. Isi jumlah per menu secara manual.');
       occupied.push(span); matchesById.get(owner(match[2]).id).push({ qty: Number(match[1]), span });
     }
   }
   let remainder = cleaned;
   for (const [a, b] of occupied.sort((x, y) => y[0] - x[0])) remainder = remainder.slice(0, a) + ' '.repeat(b - a) + remainder.slice(b);
+  // Preserve the source for human review whenever words remain outside matched
+  // menu/quantity spans. A keyword list silently dropped modifiers such as
+  // "dingin" or "gula sedikit". This does not infer per-item scope or meaning.
+  const note=/[\p{L}\p{N}]/u.test(remainder)?text.trim():'';
+  requireValue(note.length<=500,'Catatan pesanan melebihi 500 karakter. Ringkas pesan atau isi catatan setiap menu secara manual.');
   for (const product of menu) {
     const names = product.aliases.map(regexText).join('|');
     const matches = matchesById.get(product.id);
@@ -43,16 +49,14 @@ export function parseOrder(text, menu = []) {
     if (matches.length) {
       const qty = matches[0].qty;
       requireValue(qty >= 1 && qty <= 99, 'Jumlah per menu harus 1–99 porsi.');
-      items.push({ id: product.id, qty, note: /pedas|timun|sambal|tanpa|pisah/.test(cleaned) ? text.trim().slice(0, 500) : '' });
+      items.push({ id: product.id, qty, note });
     } else requireValue(!new RegExp(`\\b(${names})\\b`).test(remainder), `Jumlah ${product.name} belum jelas. Gunakan formulir manual.`);
   }
   requireValue(items.length, 'Menu atau jumlah belum dikenali. Gunakan formulir manual.');
-  const unknown = cleaned.split(/[,;\n]/).some(clause => /\d/.test(clause) && !menu.some(p => p.aliases.some(alias => clause.includes(alias))) && !/pedas|timun|sambal|ayamnya|tanpa|pisah/.test(clause));
-  requireValue(!unknown, 'Ada item di luar katalog atau angka yang belum jelas. Periksa seluruh pesanan secara manual.');
-  // Reject unknown numbered items even within a clause containing a known item.
-  requireValue(!/\d/.test(remainder) || /pedas|timun|sambal|ayamnya|tanpa|pisah/.test(remainder), 'Ada angka yang belum jelas. Gunakan formulir manual.');
-  requireValue(!/\b\d+\s*(?:x\s*)?(?!pedas\b|sedang\b|tanpa\b|sambal\b)[a-z]+\s+[a-z]+\b/.test(remainder), 'Ada item atau variasi yang belum jelas. Gunakan formulir manual.');
-  requireValue(!/\b[a-z]+\s+[a-z]+\s*\d+\b/.test(remainder), 'Ada item atau angka yang belum jelas. Gunakan formulir manual.');
+  // Every quantity must belong to a recognized menu. Numeric modifiers have no
+  // catalog schema yet: guessing a spice level can silently hide another item.
+  requireValue(!/\p{N}/u.test(remainder), 'Ada angka di luar jumlah menu yang dikenali. Isi jumlah dan catatan angka secara manual.');
+  requireValue(!/\b(belas|puluh|ratus|ribu|juta|sebelas|seratus|seribu|setengah|seperempat)\b/.test(remainder), 'Jumlah terbilang belum dikenali seluruhnya. Isi jumlah per menu secara manual.');
   return items;
 }
 export const schemaFor = menu => ({ type: 'object', additionalProperties: false, required: ['items'], properties: { items: { type: 'array', minItems: 1, maxItems: Math.min(menu.length, 20), items: { type: 'object', additionalProperties: false, required: ['id', 'qty'], properties: { id: { type: 'string', enum: menu.map(p => p.id) }, qty: { type: 'integer', minimum: 1, maximum: 99 } } } } } });

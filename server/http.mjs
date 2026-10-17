@@ -8,7 +8,8 @@ import {createIdentity} from './identity.mjs';
 import {createDisplayAccess} from './display-access.mjs';
 import {authorize,staffBootstrap} from './roles.mjs';
 import { createService } from './service.mjs';
-import { createExtractor } from './extractor.mjs';
+import { createExtractor,parseOrder } from './extractor.mjs';
+import {createPlans} from './plans.mjs';
 import {localTranscriber,MAX_AUDIO_BODY} from './transcriber.mjs';
 import { ApiError, requireValue } from './common.mjs';
 const root = path.resolve(fileURLToPath(new URL('../public/', import.meta.url)));
@@ -20,12 +21,13 @@ async function readBody(request, limit=65536) {
   for await (const chunk of request) { size += chunk.length; requireValue(size <= limit, 'Permintaan terlalu besar.', 413); chunks.push(chunk); }
   try { const body = JSON.parse(Buffer.concat(chunks).toString('utf8')); requireValue(body && typeof body === 'object' && !Array.isArray(body), 'JSON harus berupa objek.'); return body; } catch (error) { if (error instanceof ApiError) throw error; throw new ApiError(400, 'JSON tidak valid.'); }
 }
-export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-kita-live.sqlite', extractor = createExtractor(),transcriber=localTranscriber, deployment=deploymentConfig() } = {}) {
+export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-kita-live.sqlite', extractor = createExtractor(),transcriber=localTranscriber, deployment=deploymentConfig(),planOptions } = {}) {
   const store = createStore(filename); const service = createService(store),identity=createIdentity(store);
   const displays=createDisplayAccess(store);
+  const plans=createPlans(store,planOptions);
   const failures=new Map();
   const kitchenStreams=new Set();
-  const stateOf=async s=>s.role==='owner'?({...service.bootstrap(s),displays:displays.list(s),staff:identity.staff(s),staffInvites:identity.staffInvites(s),account:identity.details(s),ai:await extractor.status(),speech:await transcriber.status()}):({...staffBootstrap(store,service,s,identity.details(s)),speech:s.role==='kitchen'?await transcriber.status():{available:false}});
+  const stateOf=async s=>s.role==='owner'?({...service.bootstrap(s),plan:plans.snapshot(s),displays:displays.list(s),staff:identity.staff(s),staffInvites:identity.staffInvites(s),account:identity.details(s),ai:await extractor.status(),speech:await transcriber.status()}):({...staffBootstrap(store,service,s,identity.details(s)),ai:s.role==='cashier'?await extractor.status():undefined,speech:await transcriber.status()});
   const server = http.createServer(async (request, response) => {
     const json = (value, status = 200) => { response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); response.end(JSON.stringify(value)); };
     try {
@@ -95,7 +97,7 @@ export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-
         if(pathname==='/api/health' && request.method==='GET')return json({storage:'sqlite',mode:'live',ai:await extractor.status(),speech:await transcriber.status()});
         if(['/api/auth/register','/api/auth/login'].includes(pathname) && mutating){
           requireValue(!session,'Keluar dari akun aktif sebelum masuk dengan akun lain.',409);
-          const key=deployment.clientAddress(request)+':'+String(body.email || '').toLowerCase();const failed=failures.get(key);
+          const key=deployment.clientAddress(request)+':'+String(body.email || '').trim().toLowerCase();const failed=failures.get(key);
           requireValue(!failed || failed.until<Date.now() || failed.count<8,'Terlalu banyak percobaan. Coba lagi dalam 10 menit.',429);
           try{session=pathname.endsWith('/register') ? identity.register(body) : identity.login(body);failures.delete(key);}catch(error){const old=failed && failed.until>Date.now() ? failed : {count:0,until:Date.now()+600000};failures.set(key,{...old,count:old.count+1});throw error;}
           response.setHeader('Set-Cookie',deployment.sessionCookie(session.id));
@@ -111,7 +113,7 @@ export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-
         }
         if(pathname==='/api/auth/recover'&&mutating){
           requireValue(!session,'Keluar dari akun aktif sebelum memulihkan kata sandi.',409);
-          const key='recover:'+deployment.clientAddress(request)+':'+String(body.email||'').toLowerCase(),failed=failures.get(key),current=failed&&failed.until>Date.now()?failed:{count:0,until:Date.now()+600000};
+          const key='recover:'+deployment.clientAddress(request)+':'+String(body.email||'').trim().toLowerCase(),failed=failures.get(key),current=failed&&failed.until>Date.now()?failed:{count:0,until:Date.now()+600000};
           requireValue(current.count<8,'Terlalu banyak percobaan pemulihan. Coba lagi dalam 10 menit.',429);
           let result;try{result=identity.recover(body);failures.delete(key);}catch(error){if(error.status===401||error.status===400)failures.set(key,{...current,count:current.count+1});throw error;}
           session=result.session;
@@ -152,12 +154,15 @@ export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-
         if (pathname === '/api/bootstrap' && request.method === 'GET') return json(await stateOf(session));
         if (pathname === '/api/usage-reviews' && mutating) return json(service.saveUsageReview(session,body),201);
         if(pathname==='/api/transcriptions' && mutating){
+          const reservation=plans.reserve(session,'speech');let succeeded=false;
           const controller=new AbortController();
           const disconnected=()=>{if(!response.writableEnded)controller.abort();};
           response.once('close',disconnected);
-          try{return json(await transcriber.transcribe(body,{signal:controller.signal}));}
-          finally{response.removeListener('close',disconnected);}
+          try{const result=await transcriber.transcribe(body,{signal:controller.signal});const active=identity.resolve(cookie);requireValue(active&&active.account_id===session.account_id&&active.role_revision===session.role_revision,'Sesi berubah. Masuk kembali.',401);succeeded=true;return json(result);}
+          finally{plans.finish(reservation,succeeded);response.removeListener('close',disconnected);}
         }
+        if(pathname==='/api/account/plan'&&request.method==='GET')return json(plans.snapshot(session));
+        if(pathname==='/api/account/plan-interest'&&mutating)return json(plans.interest(session,body));
         if(pathname==='/api/account/profile' && mutating)return json(identity.saveBusiness(session,body));
         if(pathname==='/api/community/settings' && mutating)return json(identity.saveCommunity(session,body));
         if(pathname==='/api/community/invite' && mutating)return json(identity.rotateInvite(session,body));
@@ -168,9 +173,23 @@ export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-
         }
         if(pathname==='/api/account/recovery-codes' && mutating)return json(identity.generateRecoveryCodes(session,body),201);
 
-        if (pathname === '/api/extractions' && mutating) {
+        if (['/api/extractions','/api/kitchen/extractions'].includes(pathname) && mutating) {
           const catalogRevision = store.get('SELECT catalog_revision FROM business_state WHERE workspace_id=? AND business_id=?', session.workspace_id, session.business_id).catalog_revision;
-          return json({ ...await extractor.extract(body.text, store.menus(session)), catalogRevision });
+          const menu=store.menus(session).map(({id,name,aliases})=>({id,name,aliases}));
+          if(pathname==='/api/kitchen/extractions')requireValue(body.catalogRevision===catalogRevision,'Katalog berubah. Perbarui data lalu periksa pesanan kembali.',409,'catalog_changed');
+          let reservation,result;
+          try{reservation=plans.reserve(session,'text');}catch(error){
+            if(error.code!=='ai_quota_exhausted')throw error;
+            result={items:parseOrder(body.text,menu),mode:'rules',reason:'Kuota AI bulan ini habis. Parser lokal membantu mengisi; periksa semua rincian atau isi manual.'};
+          }
+          let accepted=false;
+          try{
+            if(reservation)result=await extractor.extract(body.text,menu);
+            const active=identity.resolve(cookie);
+            requireValue(active&&active.account_id===session.account_id&&active.role_revision===session.role_revision,'Sesi berubah. Masuk kembali.',401);
+            requireValue(store.get('SELECT catalog_revision FROM business_state WHERE workspace_id=? AND business_id=?',session.workspace_id,session.business_id).catalog_revision===catalogRevision,'Katalog berubah saat AI memproses. Perbarui data lalu periksa pesanan kembali.',409,'catalog_changed');
+            accepted=true;return json({...result,catalogRevision});
+          }finally{if(reservation)plans.finish(reservation,accepted&&result?.mode==='ollama');}
         }
         if (pathname === '/api/transactions' && mutating) return json(service.transaction(session, body), 201);
         if (pathname === '/api/stock-receipts' && mutating) return json(service.receive(session, body), 201);

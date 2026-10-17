@@ -15,7 +15,7 @@ export function authorize(s,path,method,body){
   const reading=method==='GET',actions=path.match(/^\/api\/kitchen\/orders\/[a-zA-Z0-9-]+\/actions$/),decision=/^\/api\/order-requests\/[a-zA-Z0-9-]+\/decision$/.test(path);
   let allowed=reading&&['/api/bootstrap','/api/kitchen','/api/kitchen/events'].includes(path);
   if(method==='POST'){
-    allowed=['/api/auth/logout','/api/account/password'].includes(path)||s.role==='cashier'&&(path==='/api/kitchen/orders'||decision)||s.role==='kitchen'&&['/api/kitchen/commands','/api/transcriptions'].includes(path);
+    allowed=['/api/auth/logout','/api/account/password'].includes(path)||s.role==='cashier'&&(['/api/kitchen/orders','/api/kitchen/extractions','/api/transcriptions'].includes(path)||decision)||s.role==='kitchen'&&['/api/kitchen/commands','/api/transcriptions'].includes(path);
     if(actions)allowed=(s.role==='cashier'?['complete','cancel']:['start','passive','resume','ready','void']).includes(body.action)&&body.wasted===undefined;
   }
   requireValue(allowed,'Peran akun ini tidak memiliki akses ke tindakan tersebut.',403,'role_forbidden');

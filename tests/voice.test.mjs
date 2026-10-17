@@ -55,9 +55,9 @@ test('speech API requires login, same origin and CSRF before inference; large bo
   assert.equal(calls,0);
   assert.equal((await post('/api/transcriptions',{...payload,csrf:state.csrf,audio:'x'.repeat(1405000)},{cookie})).status,413);
   assert.equal((await post('/api/extractions',{text:'x'.repeat(66000),csrf:state.csrf},{cookie})).status,413);assert.equal(calls,0);
-  const tables=app.store.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").map(x=>x.name);
+  const tables=app.store.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name<>'ai_usage_events' ORDER BY name").map(x=>x.name);
   const snapshot=()=>tables.map(name=>app.store.all('SELECT * FROM "'+name+'"'));
-  const before=snapshot();const response=await post('/api/transcriptions',{...payload,csrf:state.csrf},{cookie});assert.equal(response.status,200);assert.deepEqual(await response.json(),result);assert.equal(calls,1);assert.deepEqual(snapshot(),before);
+  const before=snapshot();const response=await post('/api/transcriptions',{...payload,csrf:state.csrf},{cookie});assert.equal(response.status,200);assert.deepEqual(await response.json(),result);assert.equal(calls,1);assert.deepEqual(snapshot(),before);assert.equal(app.store.get("SELECT COUNT(*) AS n FROM ai_usage_events WHERE feature='speech' AND status='succeeded'").n,1);
 });
 
 test('model status is checked once and never downloads during inference',async()=>{

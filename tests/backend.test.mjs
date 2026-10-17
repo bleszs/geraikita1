@@ -272,7 +272,8 @@ test('parser supports aliases and spelled quantities, refuses negation, fraction
 test('AI schema/evidence validation rejects hallucinated menu and quantity with explicit fallback', async () => {
   const wrong = createExtractor({ fetcher: async () => ({ ok: true, json: async () => ({ message: { content: JSON.stringify({ items: [{ id: 'ayam', qty: 99 }] }) } }) }) });
   const result = await wrong.extract('ayam geprek 2',menu); assert.equal(result.mode, 'fallback'); assert.equal(result.items[0].qty, 2);
-  const offline = createExtractor({ fetcher: async () => { throw new Error('offline'); } }); assert.equal((await offline.extract(example,menu)).mode, 'fallback');
+  const offline = createExtractor({ fetcher: async () => { throw new Error('offline'); } }); assert.equal((await offline.extract('ayam geprek 3, es teh 2, nasi goreng 1 tanpa timun',menu)).mode, 'fallback');
+  await assert.rejects(offline.extract(example,menu),/angka/); // Numeric per-portion variants require manual review.
 });
 test('HTTP enforces cookie, CSRF, Origin, owner access; concurrent reservation gets one winner', async t => {
   const app = createApp({ filename: ':memory:', extractor: createExtractor({ provider: 'rules' }) });

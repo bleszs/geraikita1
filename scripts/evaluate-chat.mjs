@@ -18,6 +18,8 @@ try {
     const writeNew = (name, value) => writeFileSync(path.join(directory, name), JSON.stringify(value, null, 2)+'\n', { flag: 'wx', mode: 0o600 });
     const sourceSha256 = Object.fromEntries(['../server/extractor.mjs', './chat-evaluation.mjs', './evaluate-chat.mjs'].map(file => [file, createHash('sha256').update(readFileSync(new URL(file, import.meta.url))).digest('hex')]));
     const frozen = { datasetSha256: createHash('sha256').update(raw).digest('hex'), sourceSha256, provider: values.provider, model: values.model, split: values.split, timeoutMs: Number(values.timeout),
+      datasetSchemaVersion:dataset.schemaVersion,reportSchemaVersion:2,
+      metricsPolicy:'Menu/quantity exact match is separate from literal required-note retention; absent annotations have no inferred note score.',
       frozenAt: new Date().toISOString(), testPolicy: 'Configuration frozen before predictions; test not used to tune. Never publish chat text or call application transaction APIs.' };
     writeNew('protocol.json', frozen);
     const report = await evaluateChats(dataset, { provider: values.provider, model: values.model, split: values.split, url: values.url, timeout: Number(values.timeout), onProgress: (done, count) => console.error(`Evaluasi chat ${done}/${count}`) });

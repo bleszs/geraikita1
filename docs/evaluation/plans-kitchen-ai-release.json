@@ -1,0 +1,49 @@
+{
+  "checkedAt": "2026-10-17T21:50:41.599115+00:00",
+  "scope": "Local implementation and isolated-memory validation; no production deployment or accuracy benchmark.",
+  "regression": {
+    "command": "npm test",
+    "exitCode": 0,
+    "nodePassed": 294,
+    "browserPassed": 62,
+    "totalPassed": 356,
+    "log": "data/v47-release-tests.log"
+  },
+  "latestBackendVerification": {
+    "command": "npm run test:backend",
+    "exitCode": 0,
+    "passed": 294,
+    "reason": "Refund quota when catalog/session validation rejects an inferred result.",
+    "log": "data/v47-backend-final.log"
+  },
+  "realModels": {
+    "checksPassed": 7,
+    "report": "plans-kitchen-ai-runtime.json",
+    "database": ":memory:",
+    "qwen": "qwen2.5:1.5b",
+    "speech": "whisper-tiny",
+    "fieldAccuracyClaimed": false
+  },
+  "data": {
+    "schemaTables": 33,
+    "liveBusinessFixturesAdded": false,
+    "additiveMigrationPreservesOriginalRows": true,
+    "usageAndNeedsPersistAfterReopen": true
+  },
+  "plans": {
+    "menuPaywall": false,
+    "freeTextMonthlyPilot": 100,
+    "freeSpeechMonthlyPilot": 30,
+    "configurable": true,
+    "paidPlansActive": false,
+    "paymentsActive": false
+  },
+  "ui": {
+    "disposition": "ship",
+    "report": "PLANS_KITCHEN_AI_UI_REVIEW.md",
+    "designComparison": "PLANS_KITCHEN_AI_DESIGN_CHECK.md",
+    "canonChanged": false
+  },
+  "productionDeployed": false,
+  "pushedToGithub": false
+}

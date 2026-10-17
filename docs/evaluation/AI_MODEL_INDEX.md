@@ -1,5 +1,9 @@
 # Lokasi model AI yang sudah dilatih
 
+V0.49 memperbaiki bukti jumlah pesanan serta waktu tunggu klien AI dapur. Tidak menambah artefak, training atau fine-tuning; status bobot v0.48 berikut tetap berlaku. [Perubahan dan batas](../AI_QUANTITY_VALIDATION.md).
+
+**Terbaru v0.48:** Qwen/Whisper tetap pralatih, tanpa bobot atau fine-tuning baru. Perbaikan retensi catatan dan evaluator bukan training. Eksperimen forecasting publik tetap 504 Ridge dan dua boosting; belum menjadi model khusus usaha pengguna yang tervalidasi. [Kapan perlu melatih](../AI_TRAINING_DECISIONS.md), [evaluasi chat schema 2](../CHAT_EVALUATION.md). Riwayat berikut menyimpan hasil eksperimen beserta batasnya.
+
 V0.31 tidak menambah training atau bobot. Diagnostik 24 transkripsi pada dua klip publik lama dan 36 replay decoder kembali menemukan dua versi teks pada Base pinned plain. Semua capture/replay cocok pada pengulangan yang diamati; penyebab/perbaikan belum dilokalisasi dan default tetap Tiny. Jumlah forecasting tetap 504 Ridge dan dua boosting. [Hasil baru](ASR_DECODER_RESULTS.md), [metode](../ASR_DECODER.md).
 
 V0.27 menampilkan pemeriksaan pemakaian di API akun dan panel Saran kulakan. Tidak ada model, training atau bobot baru: aturan statistik v0.26 tetap sama, belum mempunyai skor anomali lapangan. Total forecasting tetap 504 Ridge dan dua boosting; Whisper/Qwen tetap pretrained. [Panduan panel](../USAGE_REVIEW.md), [bukti rilis](usage-review-release.json).

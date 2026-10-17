@@ -5,6 +5,7 @@ import {migrateRoles} from './roles.mjs';
 import {migrateActivity,createActivity} from './activity.mjs';
 import {accountTableSQL,migrateAccountCredentials,migrateStaffInvites} from './staff-invites.mjs';
 import {migrateRecoveryCodes} from './account-recovery.mjs';
+import {migratePlans} from './plans.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
@@ -113,6 +114,7 @@ export function createStore(filename = 'data/gerai-kita-live.sqlite') {
   atomic(()=>migrateActivity(db));
   migrateStaffInvites(db);
   migrateRecoveryCodes(db);
+  migratePlans(db);
   function menus(s) { return all('SELECT id,name,aliases,price,recipe FROM menus WHERE workspace_id=? AND business_id=? ORDER BY rowid', s.workspace_id, s.business_id).map(m => ({ ...m, aliases: JSON.parse(m.aliases), recipe: JSON.parse(m.recipe) })); }
   function ingredients(s) { return all('SELECT id,name,unit,min_quantity,storage_note,shared FROM ingredients WHERE workspace_id=? AND business_id=? ORDER BY rowid',s.workspace_id,s.business_id).map(p=>({id:p.id,name:p.name,unit:p.unit,min:quantity(p.min_quantity),shelf:p.storage_note || 'Belum ada catatan',storageNote:p.storage_note,shared:!!p.shared})); }
   function session(business,workspace) {

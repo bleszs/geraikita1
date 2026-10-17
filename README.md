@@ -1,3 +1,17 @@
+# Gerai Kita — paket berdasarkan kebutuhan dan AI pesanan dapur
+
+V0.49 memperbaiki pemeriksaan angka ambigu dan waktu tunggu AI dapur yang sebelumnya terlalu singkat. **305 tes backend + 63 browser lulus**, ditambah delapan pemeriksaan model asli. [Perubahan, cara mencoba dan batas](docs/AI_QUANTITY_VALIDATION.md) · [Bukti](docs/evaluation/ai-quantity-release.json). Tidak menambah training atau bobot model; catatan v0.48 berikut merupakan riwayat.
+
+Pembaruan AI v0.48 mempertahankan catatan sumber seperti hangat/dingin untuk pemeriksaan pengguna dan menambah evaluasi catatan wajib yang terpisah dari skor menu/jumlah. **364 tes lulus** (302 backend + 62 browser), ditambah tujuh pemeriksaan model asli. Tidak ada fine-tuning baru; Qwen/Whisper tetap pralatih. [Status pelatihan setiap model](docs/AI_TRAINING_DECISIONS.md) · [Metode evaluasi chat](docs/CHAT_EVALUATION.md) · [Bukti](docs/evaluation/ai-notes-release.json). Angka regresi v0.47 berikut disimpan sebagai riwayat.
+
+Pembaruan lokal: paket dasar **tanpa batas 10 menu**, pemakaian AI nyata per usaha, dan pencatatan kebutuhan tambahan tanpa pembelian palsu. Pemilik/kasir dapat memakai chat atau suara untuk mengisi formulir, memeriksa hasil, lalu mengirim pesanan ke dapur secara eksplisit. Penjualan tetap dicatat setelah item siap dan pesanan diselesaikan.
+
+Jalankan `npm start`, buka **http://localhost:4174**. Bantuan pesanan ada di **Operasional dapur**; kuota dan kebutuhan paket ada di **Pengaturan akun**. [Cara memakai dan batas](docs/PLANS_AND_KITCHEN_AI.md) · [TODO terbaru](docs/AI_TODO.md) · [uji Qwen/Whisper nyata](docs/evaluation/plans-kitchen-ai-runtime.json).
+
+**356 tes regresi lulus**: 294 backend dan 62 browser. [Ringkasan validasi](docs/evaluation/plans-kitchen-ai-release.json). Restart server dan refresh browser untuk memuat modul backend baru.
+
+Qwen 1.5B dan Whisper telah diuji secara lokal melalui API pada database memori, termasuk satu pesanan selesai tanpa duplikasi. Ini bukan klaim akurasi lapangan. Pembayaran/langganan berbayar, cabang terpusat dan koordinasi pesanan mitra masih rencana. Perubahan ini **belum dideploy**; bagian berikut menyimpan riwayat deployment dan versi sebelumnya.
+
 # Gerai Kita - v0.43, deployment Railway
 
 Aplikasi online: **https://web-production-a3e13.up.railway.app**. Web berjalan di Singapura dengan SQLite pada volume persisten. Whisper Tiny berhasil melalui API terautentikasi pada akun memori; data produksi tidak diberi contoh. Akun laptop/demo belum dipindahkan, sehingga pemilik perlu mendaftar pada situs cloud.

@@ -1,0 +1,79 @@
+{
+  "checkedAt": "2026-10-17T23:11:48.382Z",
+  "passed": true,
+  "database": ":memory:",
+  "scope": "Runtime acceptance on an already-seen permitted audio clip and ephemeral catalog; not an accuracy benchmark.",
+  "productionDatabaseOpened": false,
+  "productionBusinessDataSeeded": false,
+  "ephemeralCatalogOnly": true,
+  "model": "qwen2.5:1.5b",
+  "checks": [
+    {
+      "name": "installed-model-identity",
+      "passed": true,
+      "elapsedMs": 14,
+      "digest": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+      "bytes": 986061892
+    },
+    {
+      "name": "both-model-health",
+      "passed": true,
+      "elapsedMs": 2,
+      "qwenModel": "qwen2.5:1.5b",
+      "speechModel": "whisper-tiny"
+    },
+    {
+      "name": "authorization-and-origin",
+      "passed": true,
+      "elapsedMs": 19,
+      "unauthenticated": 401,
+      "missingCsrf": 403,
+      "foreignOrigin": 403,
+      "endpoints": 3
+    },
+    {
+      "name": "authenticated-qwen-extraction",
+      "passed": true,
+      "elapsedMs": 4988,
+      "httpStatus": 200,
+      "mode": "ollama",
+      "model": "qwen2.5:1.5b",
+      "itemsMatched": true,
+      "originalModifierPreservedForReview": true
+    },
+    {
+      "name": "authenticated-speech-inference",
+      "passed": true,
+      "elapsedMs": 2361,
+      "httpStatus": 200,
+      "model": "whisper-tiny",
+      "durationSeconds": 8.58,
+      "audioSha256": "7bbe28c05cd9a767be230e61be4935f194e08a48e3ab7bec91455d93590aa668",
+      "transcriptSha256": "b273f7e49897c2b419d71732df66f92f14e80adf4edcc15726b02dfe6e2b1489"
+    },
+    {
+      "name": "ambiguous-numeric-input-rejected-without-quota-charge",
+      "passed": true,
+      "elapsedMs": 22,
+      "rejectedRequests": 8,
+      "additionalQuotaConsumed": 0
+    },
+    {
+      "name": "inference-preserves-business-data-and-meters-ai",
+      "passed": true,
+      "elapsedMs": 1,
+      "tablesCompared": 32,
+      "unchanged": true,
+      "successfulAiCallsRecorded": 2
+    },
+    {
+      "name": "reviewed-kitchen-order-completes-once",
+      "passed": true,
+      "elapsedMs": 64,
+      "reviewedExplicitly": true,
+      "duplicateCreateAndActionsSafe": true,
+      "sales": 1,
+      "stockConsumed": 40
+    }
+  ]
+}

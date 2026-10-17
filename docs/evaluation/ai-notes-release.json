@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-17T23:05:26.544408+00:00",
+  "scope": "Local code regression and isolated technical runtime acceptance, not field model accuracy.",
+  "changes": [
+    "Preserve source notes for unmatched modifiers without keyword allowlist",
+    "Reject notes longer than 500 characters rather than truncate",
+    "Dataset v2 annotations and independent required-note retention metrics",
+    "Strip source notes and expected fragments from persisted evaluation reports"
+  ],
+  "regression": {
+    "command": "npm test",
+    "exitCode": 0,
+    "backendPassed": 302,
+    "browserPassed": 62,
+    "totalPassed": 364,
+    "chatContractTests": 18,
+    "log": "data/v48-ai-notes-tests.log"
+  },
+  "realRuntime": {
+    "checksPassed": 7,
+    "database": ":memory:",
+    "qwen": "qwen2.5:1.5b",
+    "speech": "whisper-tiny",
+    "report": "ai-notes-runtime.json",
+    "noteReachedKitchen": true
+  },
+  "modelTrainedThisTurn": false,
+  "modelWeightsChanged": false,
+  "actualBusinessChatEvaluationPerformed": false,
+  "fieldAccuracy": null,
+  "newTrainingDatasetCreated": false,
+  "syntheticDataAddedToLiveAccounts": false,
+  "sourceSha256": {
+    "server/extractor.mjs": "116724a61ba1d9ab662ec27cf908b52a4a55af7883c0c19c019214fb6dc206d7",
+    "scripts/chat-evaluation.mjs": "0a5e3a71b7821cc3f06bca3584c86f512a022ef66fdf23011e085e62a721646a",
+    "scripts/evaluate-chat.mjs": "0f984872a6a57e9e0cef476c17d2cb4c6b77615b0e9feff57612c2f43b905644",
+    "scripts/verify-ai-runtime.mjs": "ddc205f976ae7231b5a33bfbb5558ab1a01f7f66221b210776cd16505985518b",
+    "tests/chat-evaluation.test.mjs": "fc1ed2c737142183fe2eab496f3496d89b1056518f26988a244936d5f42d9b98",
+    "datasets/templates/chat-dataset.json": "28e3a8d34f676c918618b9e380e2747c34dda8c089d50e75f4659ffaddc4fbcb"
+  },
+  "deployed": false,
+  "pushedToGithub": false
+}

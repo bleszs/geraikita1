@@ -29,7 +29,7 @@ test('download verification restores actual WAL-backed account data through stor
     const snapshot=backupDatabase(source,path.join(directory,'export'));
     const output=saveVerifiedBackup(envelope(readFileSync(snapshot.filename)),path.join(directory,'download'));
     assert.equal(output.integrity,'ok');assert.equal(output.foreignKeys,'ok');
-    assert.deepEqual(output.restore,{applicationStoreOpened:true,tablesCompared:31,allRowsEqual:true});
+    assert.deepEqual(output.restore,{applicationStoreOpened:true,tablesCompared:33,allRowsEqual:true});
     assert.equal(output.productionRestorePerformed,false);
     const restored=new DatabaseSync(output.filename,{readOnly:true});
     try{assert.equal(restored.prepare('SELECT COUNT(*) n FROM accounts').get().n,1);assert.equal(restored.prepare('SELECT name FROM businesses').get().name,'Usaha uji restore');}finally{restored.close();}
@@ -44,6 +44,18 @@ test('tampered bytes and a noncanonical transport are rejected before publishing
   assert.throws(()=>saveVerifiedBackup({...payload,base64:'!'.repeat(payload.base64.length)},directory),/checksum mismatch/);
   assert.throws(()=>saveVerifiedBackup({...payload,bytes:65*1024*1024},directory),/Invalid backup envelope/);
   assert.deepEqual(readdirSync(directory),[]);
+});
+
+test('older snapshot remains verifiable after additive plan tables and station defaults are migrated',t=>{
+  const directory=fixture(t),filename=path.join(directory,'legacy.sqlite'),store=createStore(filename);
+  try{
+    createIdentity(store).register({email:'legacy-plan@example.test',password:'Legacy-restore-password-2026',businessName:'Usaha lama',communityName:'Kelompok lama'});
+    store.db.exec("DROP TABLE ai_usage_events; DROP TABLE plan_interests; ALTER TABLE kitchen_stations DROP COLUMN aging_minutes");
+    const snapshot=backupDatabase(filename,path.join(directory,'export-legacy')),bytes=readFileSync(snapshot.filename);
+    const output=saveVerifiedBackup(envelope(bytes),path.join(directory,'download-legacy'));
+    assert.equal(output.restore.tablesCompared,31);assert.equal(output.restore.allRowsEqual,true);assert.equal(output.sha256,sha(bytes));
+    const raw=new DatabaseSync(output.filename,{readOnly:true});try{assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name='ai_usage_events'").get().n,0);}finally{raw.close();}
+  }finally{store.close();}
 });
 
 test('a checksum-valid non-SQLite payload is never finalized and an existing backup remains untouched',t=>{

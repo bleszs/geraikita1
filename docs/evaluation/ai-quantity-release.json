@@ -1,0 +1,64 @@
+{
+  "checkedAt": "2026-10-17T23:18:47.497469+00:00",
+  "scope": "Local quantity-evidence validation and client timeout fix; no field accuracy evaluation or training.",
+  "regression": {
+    "backendPassed": 305,
+    "browserPassed": 63,
+    "totalPassed": 368,
+    "initialFullRun": {
+      "command": "npm test",
+      "exitCode": 1,
+      "backendPassed": 305,
+      "browserPassed": 62,
+      "browserFailed": 1,
+      "failure": "Existing kitchen test waited for toast to hide; no source fix or relaxed assertion was applied.",
+      "log": "data/v49-ai-quantity-tests.log"
+    },
+    "isolatedRecheck": {
+      "command": "npx playwright test tests/real-kitchen.spec.js -g typed voice-controller",
+      "exitCode": 0,
+      "passed": 1,
+      "log": "data/v49-kitchen-toast-recheck.log"
+    },
+    "finalBrowserRun": {
+      "command": "npx playwright test",
+      "exitCode": 0,
+      "passed": 63,
+      "log": "data/v49-browser-final.log"
+    }
+  },
+  "realRuntime": {
+    "checksPassed": 8,
+    "report": "ai-quantity-runtime.json",
+    "database": ":memory:",
+    "qwen": "qwen2.5:1.5b",
+    "speech": "whisper-tiny",
+    "ambiguousRequestsRejected": 8,
+    "additionalQuotaCharged": 0
+  },
+  "clientTimeout": {
+    "extractionMs": 60000,
+    "otherRequestsMs": 15000,
+    "slowBrowserTestDelayMs": 16000,
+    "delayIsModelLatencyMeasurement": false
+  },
+  "limitations": [
+    "Numeric notes without configured variant schema need manual review.",
+    "Spelled quantities above ten are not supported; manual numeric entry remains available.",
+    "Rules still gate model coverage; this does not establish field accuracy."
+  ],
+  "newWeightsOrTraining": false,
+  "businessDataSeeded": false,
+  "deployed": false,
+  "pushedToGithub": false,
+  "sourceSha256": {
+    "server/extractor.mjs": "a04d21d36f6d419d56deadb4ffce91a9f1cfbd78f33285c4e7551f10e0248983",
+    "public/api.js": "0fe6cd111887af3b30f23a15bd16ef64a482e3e85c57ea8f3013a837e7214566",
+    "public/sw.js": "7120525ceaa017058171e41abe021dea4759cac32a74329f0b3d7678c72da3ee",
+    "scripts/verify-ai-runtime.mjs": "38b3cdf44ea4171b6a6ab23b26c5e465bc77132b6d6049130fa2f7a9f9251121",
+    "tests/api-client.test.mjs": "ed8b90e9ae6b0a65b3a91292de2a0947891d4aaacac8f4d576ab80459ecd477c",
+    "tests/chat-evaluation.test.mjs": "271d39276d46a787ae8ac4626c98e8025834683c5a6f1a0740f7ad6062421e87",
+    "tests/plans-kitchen-ai.test.mjs": "cef4ae93c7945687b55d76c524cc74e2e81438af3396a559ea63cded27e0dc1b",
+    "tests/real-plans-kitchen-ai.spec.js": "d3252e383521f4763ed2599013641c9a0215e58533433d75ab47e0b4753164dc"
+  }
+}

@@ -6,9 +6,10 @@ const ensure = (condition, message) => { if (!condition) throw new Error(message
 const textValue = value => typeof value === 'string' && value.trim().length > 0;
 const digest = value => createHash('sha256').update(value).digest('hex');
 const canonical = items => items.map(i => JSON.stringify([i.id, i.qty])).sort().join('|');
+const normalizeNote = value => value.normalize('NFKC').toLowerCase().trim().replace(/\s+/g, ' ');
 
 export function validateChatDataset(value) {
-  ensure(value?.schemaVersion === 1, 'Schema dataset chat harus versi 1.');
+  ensure([1,2].includes(value?.schemaVersion), 'Schema dataset chat harus versi 1 atau 2.');
   const p = value.provenance;
   ensure(p?.source === 'consented_business_chats' && p.permissionConfirmed === true && p.redacted === true && p.humanAnnotated === true && textValue(p.reference) && p.reference.trim().length >= 5,
     'Isi sumber chat nyata, referensi izin, permissionConfirmed, redacted dan humanAnnotated dengan benar.');
@@ -42,6 +43,18 @@ export function validateChatDataset(value) {
     for (const i of expected.items) {
       ensure(i && ids.has(i.id) && !itemIds.has(i.id) && Number.isInteger(i.qty) && i.qty >= 1 && i.qty <= 99, 'Label menu/jumlah tidak valid.');
       itemIds.add(i.id);
+      const fragments=i.requiredNoteFragments;
+      ensure(value.schemaVersion!==2||Array.isArray(fragments),'Schema 2 memerlukan requiredNoteFragments pada setiap item; array kosong berarti sudah diperiksa tanpa catatan wajib.');
+      if(fragments!==undefined){
+        ensure(Array.isArray(fragments)&&fragments.length<=20,'requiredNoteFragments harus array maksimal 20 fragmen.');
+        const seen=new Set();
+        for(const fragment of fragments){
+          ensure(textValue(fragment)&&fragment.length<=500,'Fragmen catatan wajib harus teks 1–500 karakter.');
+          const normalizedFragment=normalizeNote(fragment);
+          ensure(normalized.includes(normalizedFragment)&&!seen.has(normalizedFragment),'Fragmen catatan wajib harus berasal dari chat dan tidak duplikat.');
+          seen.add(normalizedFragment);
+        }
+      }
     }
     ensure(expected.action === 'manual' ? expected.items.length === 0 : expected.items.length > 0 && expected.items.length <= 20, 'Label manual harus kosong; label extract berisi 1–20 menu.');
   }
@@ -59,6 +72,11 @@ export function summarizeChat(rows, name) {
   const falseAcceptManual = expectedManual.filter(r => r[name].status === 'accepted').length;
   const latency = measured.map(r => r[name].latencyMs).sort((a, b) => a-b);
   const quantile = q => latency.length ? latency[Math.max(0, Math.ceil(latency.length*q)-1)] : null;
+  const annotated=expectedExtract.filter(r=>r[name].noteReview?.status==='annotated');
+  const required=annotated.reduce((sum,r)=>sum+r[name].noteReview.requiredFragments,0);
+  const retained=annotated.reduce((sum,r)=>sum+r[name].noteReview.retainedFragments,0);
+  const fullAnnotated=annotated.filter(r=>r[name].noteReview.fullyAnnotated);
+  const combinedMatches=fullAnnotated.filter(r=>correct(r)&&r[name].noteReview.allRequiredRetained).length;
   return { status: measured.length ? 'evaluated' : 'not_run', observations: measured.length,
     exactMatches: exact, exactMatchRate: measured.length ? exact/measured.length : null,
     expectedExtract: expectedExtract.length, expectedManual: expectedManual.length,
@@ -67,7 +85,31 @@ export function summarizeChat(rows, name) {
     rejectedClearOrders: expectedExtract.filter(r => r[name].status === 'manual').length,
     errors: measured.filter(r => r[name].status === 'error').length,
     modeCounts: Object.fromEntries([...new Set(measured.map(r => r[name].mode))].map(mode => [mode, measured.filter(r => r[name].mode === mode).length])),
-    latencyMs: { p50: quantile(.5), p95: quantile(.95) } };
+    latencyMs: { p50: quantile(.5), p95: quantile(.95) },
+    requiredNotes:{status:annotated.length?'evaluated':'not_annotated',annotatedOrders:annotated.length,fullyAnnotatedOrders:fullAnnotated.length,
+      annotationCoverageRate:expectedExtract.length?fullAnnotated.length/expectedExtract.length:null,
+      requiredFragments:required,retainedFragments:retained,retentionRate:required?retained/required:null,
+      acceptedOrdersWithMissingNotes:annotated.filter(r=>r[name].status==='accepted'&&!r[name].noteReview.allRequiredRetained).length,
+      menuQuantityAndRequiredNotesMatches:combinedMatches,menuQuantityAndRequiredNotesMatchRate:fullAnnotated.length?combinedMatches/fullAnnotated.length:null} };
+}
+
+function noteReview(expected,result){
+  if(expected.action!=='extract')return {status:'not_applicable'};
+  const annotated=expected.items.filter(i=>Array.isArray(i.requiredNoteFragments));
+  if(!annotated.length)return {status:'not_annotated'};
+  let required=0,retained=0;
+  for(const item of annotated){
+    const note=result.status==='accepted'?result.items.find(i=>i.id===item.id)?.note:undefined;
+    for(const fragment of item.requiredNoteFragments){required++;if(typeof note==='string'&&normalizeNote(note).includes(normalizeNote(fragment)))retained++;}
+  }
+  return {status:'annotated',annotatedItems:annotated.length,fullyAnnotated:annotated.length===expected.items.length,
+    requiredFragments:required,retainedFragments:retained,allRequiredRetained:required===retained};
+}
+// Assess literal retention in memory; never write raw notes/fragments to reports.
+function privateResult(expected,result){
+  if(!result)return null;
+  return {...result,noteReview:noteReview(expected,result),items:result.items.map(i=>({id:i.id,qty:i.qty,
+    ...(typeof i.note==='string'?{noteLength:i.note.length,noteSha256:digest(i.note)}:{})}))};
 }
 
 async function measure(operation) {
@@ -97,10 +139,12 @@ export async function evaluateChats(dataset, { provider = 'rules', split = 'test
     const rawModel = provider === 'ollama' ? await measure(async () => ({ ...await requestModelItems(row.text, dataset.menu, { model, url: endpoint.origin, timeout, fetcher }), mode: 'ollama' })) : null;
     const combined = await measure(() => pipeline.extract(row.text, dataset.menu));
     // No raw chat, customer identity, menu names or original model response in report.
-    rows.push({ recordHash: digest(row.id), conversationHash: digest(row.conversationId), expected: row.expected, parser, rawModel, pipeline: combined });
+    rows.push({ recordHash: digest(row.id), conversationHash: digest(row.conversationId),
+      expected:{action:row.expected.action,items:row.expected.items.map(i=>({id:i.id,qty:i.qty}))},
+      parser:privateResult(row.expected,parser),rawModel:privateResult(row.expected,rawModel),pipeline:privateResult(row.expected,combined) });
     onProgress(rows.length, selected.length);
   }
-  return { schemaVersion: 1, evaluatedAt: new Date().toISOString(), split, provider, model: provider === 'ollama' ? model : null,
+  return { schemaVersion: 2, datasetSchemaVersion:dataset.schemaVersion,evaluatedAt: new Date().toISOString(), split, provider, model: provider === 'ollama' ? model : null,
     promptVersion: EXTRACTION_PROMPT_VERSION, datasetRecords: dataset.records.length, evaluatedRecords: rows.length,
     splitCounts: Object.fromEntries(['train','validation','test'].map(s => [s, dataset.records.filter(r => r.split === s).length])),
     metrics: Object.fromEntries(['parser','rawModel','pipeline'].map(name => [name, summarizeChat(rows, name)])), rows,
@@ -109,5 +153,8 @@ export async function evaluateChats(dataset, { provider = 'rules', split = 'test
       'Raw model memakai schema items tanpa action manual; schema membatasi format, bukan membuktikan kesesuaian chat.',
       'Model mentah dan pipeline dipanggil terpisah secara berurutan; latensi termasuk timeout/fallback. Latensi dingin tidak dipisahkan.',
       'Error model tetap berada dalam denominator exact match; error bukan penolakan manual yang benar.',
+      'exactMatchRate menilai menu/jumlah dan keputusan manual; tidak mencakup catatan. requiredNotes hanya mengukur retensi literal fragmen yang diberi label, bukan ketepatan makna atau penempatan variasi.',
+      'Catatan tanpa anotasi tidak dianggap benar. Hasil yang ditolak atau error tidak dihitung cocok pada skor gabungan. Schema model mentah belum menghasilkan catatan.',
+      'Chat/catatan/fragmen anotasi tidak disalin ke laporan; ID katalog dan hash tetap bersifat privat dan bukan anonimisasi yang dijamin.',
       'Kesamaan percakapan dan teks antar-split diperiksa, bukan kemiripan semantik. Tidak ada fitting, fine-tuning atau tuning pada test.'] };
 }
