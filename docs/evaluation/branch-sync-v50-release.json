@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-17T23:57:06.701132+00:00",
+  "scope": "Local branch synchronization and core staff/AI transaction integration; no new training or field accuracy claim.",
+  "git": {
+    "branch": "feat/kitchen-capacity-and-waste",
+    "localParent": "8a588079b9f3ca4796d72c6659df5ae60cca37e0",
+    "incomingBranch": "origin/rahasiagelap3.0",
+    "incomingParent": "08ca38d19b896cf2b60f528c492198e08f6721c4",
+    "mainAtFetch": "625f40fac984f564acca4fea54952cdf2e2dee32",
+    "backupBranch": "backup/pre-rahasiagelap3-8a58807"
+  },
+  "regression": {
+    "command": "npm test",
+    "exitCode": 0,
+    "backendPassed": 308,
+    "browserPassed": 65,
+    "totalPassed": 373,
+    "failed": 0,
+    "log": "data/v50-release-final.log",
+    "logSha256": "988b454fc311a456394b192a91b51260ac5adeaad55495740fda8d9faa695c23",
+    "sourceFrozenBeforeFinalRun": true,
+    "guideTopics": 20,
+    "guideSteps": 100
+  },
+  "realRuntime": {
+    "command": "npm run verify:ai-runtime",
+    "checksPassed": 8,
+    "report": "branch-sync-v50-runtime.json",
+    "qwen": "qwen2.5:1.5b",
+    "speech": "whisper-tiny",
+    "database": ":memory:",
+    "fieldAccuracyBenchmark": false,
+    "newWeightsTrained": false
+  },
+  "data": {
+    "applicationTables": 36,
+    "productionDatabaseOpenedForTests": false,
+    "productionBusinessDataSeeded": false,
+    "newStaffCodesStoredRaw": false,
+    "legacyRawCodeRowsAutomaticallyPurged": false
+  },
+  "ui": {
+    "review": "BRANCH_SYNC_V50_UI_REVIEW.md",
+    "designCheck": "BRANCH_SYNC_V50_DESIGN_CHECK.md",
+    "browser": "Chromium",
+    "phone": "emulated 390px viewport; not physical-device validation",
+    "detectorAntiPatterns": 0,
+    "detectorAdvisories": 116,
+    "captures": [
+      {
+        "path": ".impeccable/review/v50/cashier-review-dark.png",
+        "width": 1440,
+        "height": 1403,
+        "sha256": "05edcf45890603db2593df1d777b670f8bdcbc7bbc1e459e19e52e9d3597ac58"
+      },
+      {
+        "path": ".impeccable/review/v50/cashier-review-desktop.png",
+        "width": 1440,
+        "height": 1403,
+        "sha256": "dd7da2cf2c5a47124143d8194b6fa5a8de593cbd0f512d3b31764734895157a5"
+      },
+      {
+        "path": ".impeccable/review/v50/cashier-review-mobile.png",
+        "width": 390,
+        "height": 1870,
+        "sha256": "befb0ebfe91512f7f6e16bb20775186030b2967cd0ac3f0ec3ae39d508d5a1bc"
+      },
+      {
+        "path": ".impeccable/review/v50/kitchen-desktop.png",
+        "width": 1440,
+        "height": 1759,
+        "sha256": "fe54f385230e1379c2785c884c8702f5e8d6f3ee7745ec2309b508297c179352"
+      },
+      {
+        "path": ".impeccable/review/v50/kitchen-mobile-dark.png",
+        "width": 390,
+        "height": 2042,
+        "sha256": "b32c507f7f38dcae9c177d5d52d90d68b16e3a34e5d6846ebb10c9a636a5655e"
+      },
+      {
+        "path": ".impeccable/review/v50/owner-staff-dark.png",
+        "width": 1440,
+        "height": 1351,
+        "sha256": "26ad3cbebad7e607e8a2eef4d0f007bac80450f24fd6e8856c187b44221455f6"
+      },
+      {
+        "path": ".impeccable/review/v50/owner-staff-desktop.png",
+        "width": 1440,
+        "height": 1351,
+        "sha256": "50ee9a858baa622902b1cef5f54a3de28d5900b0b01bf51ee6b6d7bbaac14468"
+      },
+      {
+        "path": ".impeccable/review/v50/owner-staff-mobile.png",
+        "width": 390,
+        "height": 1791,
+        "sha256": "a39a5670925f4079b9716dca32937bfa291c0a0f31ac007b5065f61d712a7a5a"
+      }
+    ],
+    "verdict": "ship",
+    "verdictScope": "Both scored composition fixes resolved; no whole-application, field, physical-device or deployment certification.",
+    "materialFindingsResolved": 2
+  },
+  "publication": {
+    "pushedThisTurn": false,
+    "deployedThisTurn": false
+  },
+  "remaining": [
+    "Consented and labeled Indonesian business orders/recordings for domain evaluation and fine-tuning decision.",
+    "Awam and physical-device multi-role demo validation.",
+    "Railway capacity required for Qwen cloud activation; existing billing constraint remains."
+  ]
+}

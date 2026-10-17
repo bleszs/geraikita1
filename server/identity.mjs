@@ -2,6 +2,7 @@ import {randomUUID,randomBytes,scryptSync,timingSafeEqual,createHash} from 'node
 import {requireValue} from './common.mjs';
 import {createStaffInvites} from './staff-invites.mjs';
 import {createAccountRecovery,remainingRecoveryCodes} from './account-recovery.mjs';
+import {createStaffAccess} from './staff-access.mjs';
 
 export function createIdentity(store) {
   const {get,run,atomic}=store;
@@ -45,9 +46,9 @@ export function createIdentity(store) {
   }
   function resolve(id){return id && get('SELECT s.*,u.id AS account_id,r.role,r.name AS account_name,r.revision AS role_revision FROM sessions s JOIN account_sessions a ON a.session_id=s.id JOIN accounts u ON u.id=a.account_id AND u.workspace_id=s.workspace_id AND u.business_id=s.business_id JOIN account_roles r ON r.account_id=u.id AND r.workspace_id=u.workspace_id AND r.business_id=u.business_id WHERE s.id=? AND s.expires_at>? AND r.disabled_at IS NULL',id,Date.now());}
   function account(s){const row=get('SELECT a.*,r.role,r.name AS account_name,r.revision AS role_revision FROM accounts a JOIN account_sessions x ON x.account_id=a.id JOIN account_roles r ON r.account_id=a.id AND r.workspace_id=a.workspace_id AND r.business_id=a.business_id WHERE x.session_id=? AND a.workspace_id=? AND a.business_id=? AND r.disabled_at IS NULL',s.id,s.workspace_id,s.business_id);requireValue(row,'Sesi akun tidak ditemukan.',401);return row;}
-  function details(s){const a=account(s);return {id:a.id,email:a.email,hasPassword:!!a.password_hash,createdAt:a.created_at,role:a.role,name:a.account_name,roleRevision:a.role_revision,recoveryCodes:a.role==='owner'&&a.password_hash?remainingRecoveryCodes(store,a.id):null};}
+  function details(s){const a=account(s);return {id:a.id,email:a.email,hasPassword:!!a.password_hash,hasAccessCode:!!store.get('SELECT account_id FROM staff_access_codes WHERE account_id=?',a.id),createdAt:a.created_at,role:a.role,name:a.account_name,roleRevision:a.role_revision,recoveryCodes:a.role==='owner'&&a.password_hash?remainingRecoveryCodes(store,a.id):null};}
   function owner(s){requireValue(account(s).role==='owner','Hanya pemilik usaha dapat mengelola akun staf.',403);}
-  function staff(s){owner(s);return store.all("SELECT a.id,a.email,a.created_at,r.name,r.role,r.revision,r.disabled_at FROM accounts a JOIN account_roles r ON r.account_id=a.id WHERE a.workspace_id=? AND a.business_id=? AND r.workspace_id=a.workspace_id AND r.business_id=a.business_id AND r.role<>'owner' ORDER BY a.created_at,a.id",s.workspace_id,s.business_id).map(a=>({id:a.id,email:a.email,name:a.name,role:a.role,revision:a.revision,createdAt:a.created_at,disabled:!!a.disabled_at}));}
+  function staff(s){owner(s);return store.all("SELECT a.id,a.email,a.created_at,r.name,r.role,r.revision,r.disabled_at,p.phone,p.notes,c.account_id AS code_account FROM accounts a JOIN account_roles r ON r.account_id=a.id LEFT JOIN staff_profiles p ON p.account_id=a.id LEFT JOIN staff_access_codes c ON c.account_id=a.id WHERE a.workspace_id=? AND a.business_id=? AND r.workspace_id=a.workspace_id AND r.business_id=a.business_id AND r.role<>'owner' ORDER BY a.created_at,a.id",s.workspace_id,s.business_id).map(a=>({id:a.id,email:a.email,name:a.name,role:a.role,revision:a.revision,createdAt:a.created_at,disabled:!!a.disabled_at,phone:a.phone||'',notes:a.notes||'',hasAccessCode:!!a.code_account}));}
   function createStaff(s,b){
     owner(s);const email=credentials(b);
     requireValue(typeof b.name==='string'&&b.name.trim().length>=2&&b.name.trim().length<=60,'Nama staf harus 2–60 karakter.');
@@ -115,5 +116,7 @@ export function createIdentity(store) {
     requireValue(typeof body.expectedCode==='string' && body.expectedCode.length<=64,'Kode undangan asal tidak valid.');
     return atomic(()=>{account(s);const w=get('SELECT owner_business_id,join_code FROM workspaces WHERE id=?',s.workspace_id);requireValue(w.owner_business_id===s.business_id,'Hanya pengelola kelompok dapat mengganti kode undangan.',403);requireValue(w.join_code===body.expectedCode,'Kode sudah berubah. Perbarui data untuk melihat kode terbaru.',409);const code=randomBytes(12).toString('hex');run('UPDATE workspaces SET join_code=? WHERE id=?',code,s.workspace_id);store.log(s.workspace_id,s.business_id,'Kode undangan diganti; kode sebelumnya tidak dapat dipakai bergabung.');return {saved:true};});
   }
-  return store.attribute({register,login,resolve,details,staff,createStaff,updateStaff,saveBusiness,changePassword,saveCommunity,rotateInvite,...createStaffInvites(store,{owner,account,issue}),...createAccountRecovery(store,{account,owner,issue,emailOf})});
+  const legacyInvites=createStaffInvites(store,{owner,account,issue}),access=createStaffAccess(store,{owner,account,issue});
+  function loginStaffCode(body){return access.loginStaffAccess(body)||legacyInvites.loginStaffCode(body);}
+  return store.attribute({register,login,resolve,details,staff,createStaff,updateStaff,saveBusiness,changePassword,saveCommunity,rotateInvite,...legacyInvites,...access,loginStaffCode,...createAccountRecovery(store,{account,owner,issue,emailOf})});
 }

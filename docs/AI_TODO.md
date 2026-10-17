@@ -1,3 +1,17 @@
+# Lanjutan v0.50 — sinkronisasi staf dan jalur kasir
+
+- [x] Ambil `origin/rahasiagelap3.0` (`08ca38d`) dan gabungkan dengan pekerjaan AI/paket/jumlah lokal `8a58807`. Cadangan sebelum merge: `backup/pre-rahasiagelap3-8a58807`; `origin/main` masih `625f40f` saat pengambilan.
+- [x] Gunakan Daftar staf, biodata, kode masuk berulang, penghapusan terkonfirmasi, tampilan kasir/dapur dan tombol lihat kata sandi dari pembaruan teman. Akun email, perubahan peran/nonaktif dan kode sementara tetap tersedia di Pengaturan.
+- [x] Sambungkan pemeriksaan pesanan kasir ke kontrak AI/katalog/kuota yang sudah ada, pertahankan koreksi banyak item dan penjelasan hampir habis. Pilihan antrean mencadangkan bahan; penjualan langsung mencatat pesanan yang sudah selesai. Akses Surplus dan panduan operasionalnya dipertahankan karena masih dipakai alur kelompok.
+- [x] Tutup risiko penjualan ganda saat respons hilang: tindakan tertunda dan kunci tetap, pemulihan memakai metadata penjualan kasir/versi perannya sendiri. Kode baru hanya tersimpan sebagai hash, pembuatan yang diulang memakai kode/kunci sama, benturan kode sementara/berulang ditolak. Hasil sensitif dan rincian review dibersihkan saat akun berubah.
+- [x] Peringatan bahan menipis memakai stok tersedia setelah pencadangan, tanpa membuka angka stok/resep/harga beli kepada staf. Pembatalan item/bahan terbuang tetap tugas pemilik sesuai pembatasan dari branch teman.
+- [x] **308 tes backend lulus**; delapan pemeriksaan Qwen 1.5B/Whisper Tiny asli lulus pada SQLite memori. Tidak ada model/bobot baru atau perubahan database usaha nyata. [Runtime](evaluation/branch-sync-v50-runtime.json).
+- [x] Regresi akhir `npm test` exit 0: **308 backend + 65 browser = 373 lulus**, panduan 20 topik/100 langkah. Desktop/ponsel/gelap diperiksa; dua temuan komposisi diperbaiki sekali, verdict **ship** untuk perbaikan yang dinilai. [Rilis](evaluation/branch-sync-v50-release.json), [review](evaluation/BRANCH_SYNC_V50_UI_REVIEW.md). Tidak menggantikan uji pengguna/perangkat fisik.
+- [ ] Uji demo pengguna awam dan perangkat fisik berbeda. Pengujian browser otomatis/emulasi tidak menggantikan tahap ini.
+- [ ] Evaluasi pesanan/rekaman usaha Indonesia berizin dan berlabel masih menunggu data; tentukan fine-tuning dari pola kesalahan nyata. Aktivasi Qwen Railway masih memerlukan kapasitas yang telah dibahas.
+
+[Rincian perubahan, cara memakai dan batas](BRANCH_SYNC_V50.md). Sinkronisasi lokal belum berarti push/deploy.
+
 # Lanjutan v0.49 — pemeriksaan jumlah dan waktu tunggu AI
 
 - [x] Tutup celah angka tersisa: input seperti dua belas yang terbaca dua, jumlah bertanda negatif/positif sebelum menu, serta angka menu lain yang tersembunyi di catatan ditolak untuk pemeriksaan manual.

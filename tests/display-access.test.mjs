@@ -40,7 +40,7 @@ test('public projection contains only order code/status, hides labels, menu/stoc
 test('migration adds one empty table without modifying previous data and persists through reopening',t=>{
  const dir=mkdtempSync(path.join(os.tmpdir(),'gerai-display-')),filename=path.join(dir,'store.sqlite');let store=emptyStore(filename);
  t.after(()=>{store?.close();rmSync(dir,{recursive:true,force:true});});
- store.db.exec('DROP TABLE display_access');const snap=()=>store.all("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").map(({name})=>[name,store.all(`SELECT * FROM ${name}`)]),before=snap();assert.equal(before.length,32);store.close();store=emptyStore(filename);
+ store.db.exec('DROP TABLE display_access');const snap=()=>store.all("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").map(({name})=>[name,store.all(`SELECT * FROM ${name}`)]),before=snap();assert.equal(before.length,35);store.close();store=emptyStore(filename);
  assert.deepEqual(snap().filter(([name])=>name!=='display_access'),before);assert.equal(store.get('SELECT COUNT(*) AS n FROM display_access').n,0);
  store.close();store=emptyStore(filename);assert.equal(store.get('PRAGMA quick_check').quick_check,'ok');assert.deepEqual(store.all('PRAGMA foreign_key_check'),[]);
 });

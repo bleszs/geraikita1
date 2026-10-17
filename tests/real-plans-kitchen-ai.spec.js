@@ -68,11 +68,11 @@ test('cashier can review extracted orders without accessing owner billing or rec
     await post('staff',{email,password:'CashierAI2026!',name:'Kasir pengujian',role:'cashier',confirmed:true,idempotencyKey:crypto.randomUUID()});await post('auth/logout',{});
     await post('auth/login',{email,password:'CashierAI2026!'});
   },{csrf:s.csrf,email});
-  await page.reload();await page.getByLabel('Teks pesanan',{exact:true}).fill('dua roti pengujian');await page.getByRole('button',{name:'Bantu isi pesanan',exact:true}).click();await expect(page.getByLabel('Porsi item 1',{exact:true})).toHaveValue('2');
+  await page.reload();await page.getByLabel('Pesanan pelanggan',{exact:true}).fill('dua roti pengujian');await page.getByRole('button',{name:'Baca pesanan',exact:true}).click();await expect(page.getByLabel('Porsi item 1',{exact:true})).toHaveValue('2');
   await expect(page.locator('#plan-title')).toHaveCount(0);expect((await page.request.get('/api/account/plan')).status()).toBe(403);
   const data=await(await page.request.get('/api/bootstrap')).json();expect(data.menu[0].recipe).toBeUndefined();
   await capture(page,'cashier-');
-  await page.getByLabel('Label pesanan / meja').fill('Kasir AI');await page.getByRole('button',{name:'Masukkan ke antrean',exact:true}).click();await expect(page.locator('.kitchen-order')).toHaveCount(1);
+  await page.getByLabel('Label pesanan / meja').fill('Kasir AI');await page.getByRole('button',{name:'Masukkan ke antrean dapur',exact:true}).click();await expect(page.locator('.kitchen-order')).toHaveCount(1);
 });
 
 test('slow kitchen extraction outlasts the old timeout, keeps reviewed fields on invalid numbers and permits manual correction',async({page})=>{

@@ -61,3 +61,36 @@ test('staff-code attempts are bounded per source across changing guesses and val
  assert.equal((await f.post('/auth/staff-code',{code:'ABCD2345'})).status,429);
  assert.equal(f.app.store.get('SELECT used_at FROM staff_invites').used_at,null);
 });
+
+test('persistent staff code survives repeated logins and is revoked only when owner deletes the staff profile',t=>{
+ const {store,identity,owner}=fixture(t),code='QRST2345',created=identity.createStaffAccess(owner,{name:'Kasir tetap',role:'cashier',phone:'0812345',notes:'Shift pagi',code,confirmed:true,idempotencyKey:randomUUID()});
+ assert.equal(created.hasAccessCode,true);assert.equal(identity.staff(owner).find(x=>x.id===created.id).phone,'0812345');
+ const first=identity.loginStaffCode({code}),second=identity.loginStaffCode({code:'qrst-2345'});assert.equal(first.account_id,created.id);assert.equal(second.account_id,created.id);
+ assert.equal(JSON.stringify(store.all('SELECT * FROM staff_access_codes')).includes(code),false);
+ identity.deleteStaff(owner,created.id,{confirmed:true});assert.equal(identity.resolve(first.id),undefined);assert.equal(identity.resolve(second.id),undefined);assert.throws(()=>identity.loginStaffCode({code}),/Kode/);assert.equal(identity.staff(owner).some(x=>x.id===created.id),false);
+});
+test('persistent code retries keep one profile, never store raw secrets and reject collisions with temporary codes',t=>{
+ const {store,identity,owner}=fixture(t),b=body('QRST2345'),created=identity.createStaffAccess(owner,b);
+ assert.equal(identity.createStaffAccess(owner,b).duplicate,true);assert.equal(identity.staff(owner).length,1);
+ for(const table of ['staff_profiles','staff_access_codes','staff_access_actions','audit'])assert.equal(JSON.stringify(store.all(`SELECT * FROM ${table}`)).includes(b.code),false,table);
+ assert.equal(JSON.stringify(identity.staff(owner)).includes(b.code),false);assert.equal(JSON.stringify(created).includes(b.code),false);
+ assert.throws(()=>identity.createStaffInvite(owner,{...body(b.code),idempotencyKey:randomUUID()}),/Kode/);
+ identity.createStaffInvite(owner,body('WXYZ6789'));assert.throws(()=>identity.createStaffAccess(owner,body('WXYZ6789')),/Kode/);
+ assert.throws(()=>identity.createStaffAccess(owner,{...b,name:'Nama berubah'}),/Kunci/);
+ const s=identity.loginStaffCode({code:b.code});assert.equal(identity.details(s).hasAccessCode,true);
+ identity.updateStaff(owner,created.id,{action:'disable',revision:1,confirmed:true,idempotencyKey:randomUUID()});assert.equal(identity.resolve(s.id),undefined);assert.throws(()=>identity.loginStaffCode({code:b.code}),/dinonaktifkan/);
+});
+test('persistent staff HTTP access checks CSRF, confirmation, owner role and business scope before deletion',async t=>{
+ const f=await appFixture(t),b={...body('QRST2345'),csrf:f.owner.csrf};
+ assert.equal((await f.post('/staff-access',body('QRST2345'),{cookie:f.cookie})).status,403);
+ assert.equal((await f.post('/staff-access',{...b,confirmed:false},{cookie:f.cookie})).status,400);
+ const created=await f.post('/staff-access',b,{cookie:f.cookie});assert.equal(created.status,201);const a=await created.json();
+ const login=await f.post('/auth/staff-code',{code:b.code}),s=await login.json(),cookie=login.headers.get('set-cookie').split(';')[0];
+ assert.equal((await f.post('/staff-access',{...body('WXYZ6789'),csrf:s.csrf},{cookie})).status,403);
+ assert.equal((await f.post(`/staff/${a.id}/delete`,{confirmed:true,csrf:s.csrf},{cookie})).status,403);
+ const otherResponse=await f.post('/auth/register',credentials()),other=await otherResponse.json(),otherCookie=otherResponse.headers.get('set-cookie').split(';')[0];
+ assert.equal((await f.post(`/staff/${a.id}/delete`,{confirmed:true,csrf:other.csrf},{cookie:otherCookie})).status,404);
+ assert.equal((await f.post(`/staff/${a.id}/delete`,{confirmed:false,csrf:f.owner.csrf},{cookie:f.cookie})).status,400);
+ assert.equal((await f.post(`/staff/${a.id}/delete`,{confirmed:true,csrf:f.owner.csrf},{cookie:f.cookie})).status,200);
+ assert.equal((await f.post('/auth/staff-code',{code:b.code})).status,401);
+});

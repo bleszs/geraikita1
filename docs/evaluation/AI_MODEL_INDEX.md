@@ -1,3 +1,7 @@
+# Integrasi runtime v0.50
+
+Sinkronisasi `rahasiagelap3.0` mempertahankan seluruh model dan artefak pelatihan sebelumnya. Kasir baru memakai kontrak ekstraksi katalog/kuota yang sama; tidak ada fine-tuning, bobot baru atau skor akurasi lapangan baru. Delapan pemeriksaan Qwen 1.5B/Whisper Tiny asli lulus secara lokal pada SQLite memori. [Bukti runtime](branch-sync-v50-runtime.json) dan [rincian integrasi](../BRANCH_SYNC_V50.md). Catatan versi berikut merupakan riwayat.
+
 # Lokasi model AI yang sudah dilatih
 
 V0.49 memperbaiki bukti jumlah pesanan serta waktu tunggu klien AI dapur. Tidak menambah artefak, training atau fine-tuning; status bobot v0.48 berikut tetap berlaku. [Perubahan dan batas](../AI_QUANTITY_VALIDATION.md).

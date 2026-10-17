@@ -50,7 +50,7 @@ export function createStaffInvites(store,{owner,account,issue}){
     return atomic(()=>{
       const previous=get(select+' WHERE i.workspace_id=? AND i.business_id=? AND i.idem=?',...scope(s),b.idempotencyKey);
       if(previous){requireValue(previous.fingerprint===fingerprint,'Kunci pembuatan sudah dipakai untuk kode atau staf berbeda.',409);return {...metadata(previous),duplicate:true};}
-      requireValue(!get('SELECT id FROM staff_invites WHERE code_hash=?',codeHash),'Kode sudah pernah dipakai. Tutup pemeriksaan dan buat kode baru.',409);
+      requireValue(!get('SELECT id FROM staff_invites WHERE code_hash=?',codeHash)&&!get('SELECT account_id FROM staff_access_codes WHERE code_hash=?',codeHash),'Kode sudah pernah dipakai. Tutup pemeriksaan dan buat kode baru.',409);
       let target;
       if(existing){
         target=get("SELECT account_id,name,role,revision,disabled_at FROM account_roles WHERE account_id=? AND workspace_id=? AND business_id=? AND role<>'owner'",b.accountId,...scope(s));

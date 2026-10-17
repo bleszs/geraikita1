@@ -21,7 +21,7 @@ test('availability uses owner minimum and available reservations, with out takin
 test('cashier receives only status metadata; kitchen receives no menu inventory data',t=>{
  const f=fixture(t),{m}=menu(f),cashier=staff(f,'cashier'),kitchen=staff(f,'kitchen');order(f,f.owner,m,8);
  const c=staffBootstrap(f.store,f.service,cashier,f.identity.details(cashier)),k=staffBootstrap(f.store,f.service,kitchen,f.identity.details(kitchen));
- assert.deepEqual(Object.keys(c.kitchen.menus[0]).sort(),['configured','id','name','status']);assert.equal(c.kitchen.menus[0].status,'low');assert.equal(JSON.stringify(c).includes('portions'),false);assert.equal(JSON.stringify(c).includes('Bahan uji'),false);assert.equal(JSON.stringify(c).includes('min_quantity'),false);assert.deepEqual(k.kitchen.menus,[]);
+ assert.deepEqual(Object.keys(c.kitchen.menus[0]).sort(),['configured','id','name','status']);assert.equal(c.kitchen.menus[0].status,'low');assert.equal(JSON.stringify(c).includes('portions'),false);assert.deepEqual(c.lowStock,['Bahan uji']);assert.equal(JSON.stringify(c).includes('min_quantity'),false);assert.deepEqual(k.kitchen.menus,[]);assert.deepEqual(k.lowStock,[]);assert.equal(JSON.stringify(k).includes('Bahan uji'),false);
 });
 test('new audit and kitchen actions retain trusted actor snapshots, ignore supplied actor and deduplicate',t=>{
  const f=fixture(t),{m}=menu(f),cashier=staff(f,'cashier'),kitchen=staff(f,'kitchen'),o=order(f,cashier,m,1),task=f.service.kitchen.snapshot(kitchen).orders[0].tasks[0];

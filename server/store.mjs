@@ -6,6 +6,7 @@ import {migrateActivity,createActivity} from './activity.mjs';
 import {accountTableSQL,migrateAccountCredentials,migrateStaffInvites} from './staff-invites.mjs';
 import {migrateRecoveryCodes} from './account-recovery.mjs';
 import {migratePlans} from './plans.mjs';
+import {migrateStaffAccess} from './staff-access.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
@@ -113,6 +114,7 @@ export function createStore(filename = 'data/gerai-kita-live.sqlite') {
   migrateRoles(db);
   atomic(()=>migrateActivity(db));
   migrateStaffInvites(db);
+  migrateStaffAccess(db);
   migrateRecoveryCodes(db);
   migratePlans(db);
   function menus(s) { return all('SELECT id,name,aliases,price,recipe FROM menus WHERE workspace_id=? AND business_id=? ORDER BY rowid', s.workspace_id, s.business_id).map(m => ({ ...m, aliases: JSON.parse(m.aliases), recipe: JSON.parse(m.recipe) })); }
