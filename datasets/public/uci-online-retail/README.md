@@ -36,4 +36,4 @@ Preparasi memakai openpyxl dalam lingkungan Python terpisah. Training tetap Node
 
 Setiap preparasi dan training membuat direktori baru. Index processed menunjuk preparasi terbaru, sedangkan manifest/protokol/hash pada run model tetap disimpan. `verify:uci` membandingkan hasil preparasi ulang, memeriksa hash sumber/kode, melatih ulang dengan konfigurasi protokol yang sama dan mencocokkan bobot/scaler/76 prediksi. Test kini sudah terlihat; pengulangan adalah reproduksi, bukan test independen baru.
 
-Raw, processed dan model diabaikan Git. Artefak publik tidak diaktifkan untuk akun dan skrip tidak membaca/menulis SQLite aplikasi. [Laporan](../../../docs/evaluation/UCI_RETAIL_RESULTS.md), [analisis error](../../../docs/evaluation/UCI_RETAIL_ERROR_ANALYSIS.md), [indeks model](../../../docs/evaluation/AI_MODEL_INDEX.md).
+Raw, processed dan model diabaikan Git. Artefak publik tidak diaktifkan untuk akun dan skrip tidak membaca/menulis SQLite aplikasi. Laporan, analisis error, indeks model.

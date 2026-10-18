@@ -10,4 +10,4 @@ Perubahan dari sumber: pilih 64 rekaman melalui urutan hash nama berkas, lalu ko
 
 Ini rekaman pembacaan teks umum, bukan percakapan pesanan, lingkungan kedai, data pengguna aplikasi, atau bukti uji mikrofon pemilik usaha. Pemisahan test oleh penerbit tidak membuktikan bebas overlap dengan data pretraining Whisper. Sampel ini menjadi test yang telah terlihat setelah run; tidak boleh digunakan untuk tuning lalu disebut test independen.
 
-Perintah dan hasil: [FLEURS_ASR.md](../../../docs/FLEURS_ASR.md).
+Perintah dan hasil: FLEURS_ASR.md.
