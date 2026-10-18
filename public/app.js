@@ -23,7 +23,7 @@ const isStaff=()=>!!state?.account?.role&&state.account.role!=='owner';
 const kitchenKey=()=>isStaff()?state.account.id+':'+state.account.roleRevision+':'+crypto.randomUUID():crypto.randomUUID();
 const route=()=>isStaff()?(location.hash==='#pengaturan'?'pengaturan':'dapur'):routes.some(r=>r[0]===location.hash.slice(1))?location.hash.slice(1):'dapur';
 const guide=createGuideController({getContext:()=>({scope:state?scopeOf(state):'guest',signedIn:!!state,role:state?.account?.role||'owner',route:route(),newAccount:Boolean(ui.guideAutoplayRequested)}),consumeNewAccount:()=>{ui.guideAutoplayRequested=false;},navigate:page=>{location.hash=page;},notify,escape:e});
-function notify(message){const box=document.querySelector('#toast');box.textContent=message;box.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>box.hidden=true,7000);}
+function notify(message){const box=document.querySelector('#toast');box.textContent=message;box.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>box.hidden=true,4000);}
 function showUpdatePrompt(){
   if(!registration?.waiting || document.querySelector('[data-action="update-app"]'))return;
   const main=document.querySelector('#main');if(!main)return;

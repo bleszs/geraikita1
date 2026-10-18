@@ -1,5 +1,5 @@
 import {randomUUID,createHash} from 'node:crypto';
-import {requireValue,units,quantity,dayAt} from './common.mjs';
+import {requireValue,units,quantity,dayAt,PAYMENT_METHODS,applicationFee} from './common.mjs';
 import {usage} from '../public/catalog.js';
 import {planKitchen} from './kitchen-schedule.mjs';
 import {pendingRequests} from './order-requests.mjs';
@@ -95,7 +95,7 @@ export function createKitchen(store,{available,stockChanged}){
     requireValue(typeof b.idempotencyKey==='string'&&b.idempotencyKey.length>=8&&b.idempotencyKey.length<=100,'Kunci tindakan tidak valid.');
     requireValue(Number.isInteger(b.revision),'Versi pesanan tidak valid.');
     requireValue(['start','passive','resume','ready','complete','cancel','discard','void'].includes(b.action),'Tindakan dapur tidak valid.');
-    const fingerprint=hash([id,b.action,b.taskId||null,b.revision,b.confirmed===true,...(b.wasted!==undefined?[b.wasted]:[])]);
+    const fingerprint=hash([id,b.action,b.taskId||null,b.revision,b.confirmed===true,...(b.wasted!==undefined?[b.wasted]:[]),...(b.paymentMethod!==undefined?[b.paymentMethod]:[])]);
     return atomic(()=>{
       const prev=get('SELECT * FROM kitchen_actions WHERE workspace_id=? AND business_id=? AND idem=?',...scope(s),b.idempotencyKey);
       if(prev){requireValue(prev.fingerprint===fingerprint,'Kunci tindakan dipakai untuk tindakan berbeda.',409);return {...JSON.parse(prev.result),duplicate:true};}
@@ -112,9 +112,12 @@ export function createKitchen(store,{available,stockChanged}){
         }else if(b.action==='complete'){
           requireValue(b.wasted===undefined,'Penyelesaian memakai resep pesanan; catat bahan terbuang per item.');
           requireValue(live.every(t=>t.status==='ready'),'Selesaikan semua item sebelum menyerahkan pesanan.',409);
+          // Payment is taken at completion, so each order is recorded as a sale exactly once.
+          const paymentMethod=b.paymentMethod??'tunai';requireValue(PAYMENT_METHODS.includes(paymentMethod),'Metode pembayaran tidak dikenal.');
           status='completed';saleId=randomUUID();consume(s,used,'sale',saleId,date);
           const items=JSON.parse(o.items).filter(i=>!i.voided);
-          run('INSERT INTO sales(id,workspace_id,business_id,idem,fingerprint,items,total,date,created_at,cancelled_at,usage_snapshot) VALUES(?,?,?,?,?,?,?,?,?,NULL,?)',saleId,...scope(s),'kitchen:'+id,o.fingerprint,JSON.stringify(items),o.total,date,now,JSON.stringify(Object.fromEntries(Object.entries(used).map(([p,q])=>[p,quantity(q)]))));
+          const fee=applicationFee(o.total),net=o.total-fee;
+          run('INSERT INTO sales(id,workspace_id,business_id,idem,fingerprint,items,total,date,created_at,cancelled_at,usage_snapshot,payment_method,fee,net) VALUES(?,?,?,?,?,?,?,?,?,NULL,?,?,?,?)',saleId,...scope(s),'kitchen:'+id,o.fingerprint,JSON.stringify(items),o.total,date,now,JSON.stringify(Object.fromEntries(Object.entries(used).map(([p,q])=>[p,quantity(q)]))),paymentMethod,fee,net);
         }else{
           requireValue(b.confirmed===true&&live.some(t=>t.status!=='queued'),'Konfirmasi bahwa bahan pesanan akan dicatat terpakai tanpa penjualan.',409);
           // Reserved units not recorded as waste are released with the reservation.

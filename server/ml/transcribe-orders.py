@@ -27,13 +27,22 @@ def load_model():
     return WhisperModel(str(ROOT / 'models/speech/whisper-base'), device='cpu', compute_type='int8', cpu_threads=2, num_workers=1, local_files_only=True)
 
 
+# Bias decoding toward Indonesian food-order phrasing (menu names + portions)
+# so short, quiet commands are heard more reliably. It never adds menu items by
+# itself: the text is still reviewed by the user and gated by the catalog parser.
+ORDER_PROMPT = 'Pesanan makanan dan minuman dalam Bahasa Indonesia, menyebut nama menu dan jumlah porsi.'
+
+
 def transcribe(data, model=None):
     # Reuse strict container, duration, mono/resampling and silence bounds.
     from transcribe import decode_bounded, AudioError, RATE
     audio = decode_bounded(data)
-    segments, _ = (model or load_model()).transcribe(audio, language='id', task='transcribe', beam_size=3, temperature=0,
+    # beam_size 5 + a temperature ladder let faster-whisper retry a weak decode
+    # instead of giving up; the hallucination guards below stay strict.
+    segments, _ = (model or load_model()).transcribe(audio, language='id', task='transcribe', beam_size=5,
+        temperature=[0.0, 0.2, 0.4, 0.6, 0.8], initial_prompt=ORDER_PROMPT,
         condition_on_previous_text=False, vad_filter=True, vad_parameters={'min_silence_duration_ms': 400},
-        no_speech_threshold=0.6, log_prob_threshold=-1.0, compression_ratio_threshold=2.4)
+        no_speech_threshold=0.7, log_prob_threshold=-1.2, compression_ratio_threshold=2.4)
     accepted = []
     for segment in segments:
         text = segment.text.strip()
@@ -41,7 +50,7 @@ def transcribe(data, model=None):
             continue
         if repetitive(text) or segment.compression_ratio > 2.4:
             raise AudioError('unreliable_speech')
-        if segment.no_speech_prob >= 0.6 or segment.avg_logprob < -1.0:
+        if segment.no_speech_prob >= 0.75 or segment.avg_logprob < -1.3:
             # Never silently remove an unclear item/quantity from an order.
             raise AudioError('no_speech')
         accepted.append(text)

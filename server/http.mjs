@@ -195,6 +195,7 @@ export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-
           }finally{if(reservation)plans.finish(reservation,accepted&&result?.mode==='ollama');}
         }
         if (pathname === '/api/transactions' && mutating) return json(service.transaction(session, body), 201);
+        if (pathname === '/api/withdrawals' && mutating) return json(service.withdraw(session, body), 201);
         if (pathname === '/api/stock-receipts' && mutating) return json(service.receive(session, body), 201);
         if (pathname === '/api/menus' && mutating) return json(service.saveMenu(session, null, body), 201);
         if (pathname === '/api/ingredients' && mutating) return json(service.saveIngredient(session,null,body),201);
