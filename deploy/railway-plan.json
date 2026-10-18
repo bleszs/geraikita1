@@ -1,12 +1,12 @@
 {
   "kind": "gerai-kita-deployment-plan",
-  "status": "web-deployed-awaiting-paid-plan-activation",
+  "status": "deployed-community-brand-base-voice-qwen-via-existing-external-endpoint",
   "provider": "railway",
   "projectName": "gerai-kita",
   "source": {
     "repository": "bleszs/rahasiagelap",
-    "branch": "feat/kitchen-capacity-and-waste",
-    "delivery": "CLI upload; GitHub continuous deployment not connected"
+    "branch": "voicetext",
+    "delivery": "CLI upload of working tree; no new commit/push; no GitHub autodeploy claim"
   },
   "services": [
     {
@@ -27,12 +27,18 @@
         "TRUST_RAILWAY_PROXY": "true",
         "AI_PROVIDER": "ollama",
         "OLLAMA_MODEL": "qwen2.5:1.5b",
-        "OLLAMA_URL": "http://ollama.railway.internal:11434"
+        "OLLAMA_URL": "https://<configured-external-ollama-endpoint>"
       },
-      "speech": "Whisper Tiny pinned source bundled by Dockerfile; CPU int8; existing default profile",
+      "speech": "Whisper Base / base-orders, CPU int8, selected by Docker default; pinned weights",
       "region": "asia-southeast1-eqsg3a",
       "status": "deployed",
-      "volumeSizeMB": 500
+      "volumeSizeMB": 500,
+      "aiRuntime": {
+        "available": true,
+        "model": "qwen2.5:1.5b",
+        "connection": "existing external endpoint, private URL omitted",
+        "independentRailwayOllama": false
+      }
     },
     {
       "name": "ollama",
@@ -60,7 +66,7 @@
       "modelInstalled": false
     }
   ],
-  "backups": "Reusable CLI export and off-volume download verified, SHA256/integrity/FK checked and isolated application store restore preserves all30tables. Provider backup quota0; local scheduler not registered because Windows blocked its preparation script.",
+  "backups": "Before/after deployment backups verified. All original rows and columns of 36 existing tables are unchanged; 1 additive withdrawal table. Integrity OK, zero foreign-key violations. No production restore or test fixtures.",
   "cloudAcceptancePending": [
     "Paid Hobby activation, model RAM and volume, then private Qwen deployment",
     "Real authenticated app extraction with Qwen",
@@ -79,5 +85,6 @@
     "defaultPaymentMethodConfigured": false
   },
   "backupTool": "scripts/railway-backup.mjs",
-  "backupEvidence": "docs/evaluation/railway-backup-release.json"
+  "backupEvidence": "docs/evaluation/railway-backup-release.json",
+  "latestEvidence": "docs/evaluation/community-deployment.json"
 }

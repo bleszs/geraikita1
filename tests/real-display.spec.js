@@ -46,7 +46,7 @@ test('authentication loss clears the old display link before another account sig
  const {s}=await owner(page);const url=await link(page),token=new URL(url).hash.slice(1);
  await page.route('**/api/bootstrap',route=>route.fulfill({status:401,json:{error:'Sesi berakhir'}}));await page.getByRole('button',{name:'Perbarui data',exact:true}).click();await expect(page.getByRole('button',{name:'Masuk',exact:true})).toBeVisible();
  await page.unroute('**/api/bootstrap');await page.request.post('/api/auth/logout',{data:{csrf:s.csrf}});await page.locator('[data-action=show-register]').click();
- await page.getByLabel('Nama usaha',{exact:true}).fill('Usaha baru');await page.getByLabel('Nama kelompok',{exact:true}).fill('Kelompok baru');await page.getByLabel('Email',{exact:true}).fill(randomUUID()+'@example.test');await page.getByLabel('Kata sandi',{exact:true}).fill('DisplayOther2026!');await page.getByRole('button',{name:'Daftarkan usaha',exact:true}).click();
+ await page.getByLabel('Nama usaha',{exact:true}).fill('Usaha baru');await page.getByLabel('Email',{exact:true}).fill(randomUUID()+'@example.test');await page.getByLabel('Kata sandi',{exact:true}).fill('DisplayOther2026!');await page.getByRole('button',{name:'Daftarkan usaha',exact:true}).click();
  await expect(page.locator('.display-management')).toBeVisible();await expect(page.locator('.display-link-result')).toHaveCount(0);expect(await page.locator('body').innerHTML()).not.toContain(token);
 });
 test('a hidden customer tab clears codes and waits for fresh authorization before showing them again',async({page,browser})=>{

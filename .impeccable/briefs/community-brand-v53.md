@@ -1,0 +1,7 @@
+# Beli bersama, registration, kitchen command and brand
+
+Mode: Operate. Narrow extension of the existing cream/terracotta/Nunito light and dark interface. Preserve DESIGN.md and its sidecar. User explicitly wants registration without group fields, joining/creating a group in Beli bersama, a readable invitation section, a properly attached kitchen command button, Excel-readable exports and the supplied GK logo.
+
+Registration contains business name, email and password only, without guest tutorial. Beli bersama contains code entry and optional creation before participation. Existing groups show their name, role and readable copyable code; manager settings live here. Preserve bookkeeping, stock, staff permissions and review/consent. No fake data or financial changes. Logo is a native SVG traced from the user's visual reference and is reused for branding, favicon, receipt and installed-app icons.
+
+Review: one batched desktop/mobile/light/dark inspection, one correction batch and at most one confirmation; isolated in-memory database and explicitly synthetic test records only. Primary button stays beside its own input rather than being stretched to the bottom of another panel. New controls reuse existing tokens and native validation. Verify data isolation and atomic joining through backend and browser tests separately from visual inspection. Do not claim model accuracy or payment settlement from UI checks. No commits.

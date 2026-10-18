@@ -31,6 +31,9 @@ test('bootstrap exposes the actual screening contract without changing existing 
   assert.equal(recommendation.usageScreening.summary.reviewCandidates,1);
   assert.deepEqual(recommendation.driftScreening,screenDrift(history,{asOf,unit:'kg'}));
   const {productId,usageScreening,driftScreening,...existing}=recommendation;
+  assert.equal(existing.trainedModel.globalCandidate.status,'not_qualified');
+  assert.ok(existing.trainedModel.globalCandidate.localMetrics.model.mae>=existing.trainedModel.globalCandidate.localMetrics.ma7.mae);
+  delete existing.trainedModel.globalCandidate;
   assert.equal(productId,f.ingredient.id);assert.deepEqual(existing,forecast(history,0,asOf,2,'kg'));
   assert.deepEqual(f.snapshot(),before);
 });

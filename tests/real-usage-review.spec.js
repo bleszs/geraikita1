@@ -10,7 +10,8 @@ test.beforeAll(async()=>{
   app=createApp({filename:':memory:',extractor:createExtractor({provider:'rules'}),transcriber:{status:async()=>({available:false,model:'whisper-tiny'})}});
   await new Promise(r=>app.server.listen(0,'127.0.0.1',r));base='http://127.0.0.1:'+app.server.address().port;
 });
-test.afterAll(async()=>{await app?.close();});
+test.afterEach(async({page})=>{if(!page.isClosed())await page.goto('about:blank');});
+test.afterAll(async()=>{if(app){const closing=app.close();app.server.closeAllConnections();await closing;}});
 async function setup(page,{history=false,gap=false}={}){
   const response=await page.request.post(base+'/api/auth/register',{data:{businessName:'Pemeriksaan terisolasi',communityName:'Kelompok uji browser',email:crypto.randomUUID()+'@example.test',password:'Browser-review-only-456'}});
   expect(response.status()).toBe(201);const owner=await response.json();
@@ -22,7 +23,7 @@ async function setup(page,{history=false,gap=false}={}){
     if(gap&&i===82)continue;
     app.store.run('INSERT INTO daily_usage VALUES(?,?,?,?,?)',owner.workspaceId,owner.business.id,id,addDays(dayAt(),i-84),units(i===83?60:i===82?0:10));
   }
-  await page.goto(base+'/#restock');await expect(page.getByRole('heading',{name:'Periksa pemakaian bahan',exact:true})).toBeVisible();
+  await page.goto(base+'/#restock');await expect(page.getByRole('heading',{name:'Periksa pemakaian bahan',exact:true})).toBeVisible();await page.locator('.usage-review>summary').click();
   return {owner,id};
 }
 const panel=page=>page.locator('.usage-review');
@@ -35,7 +36,7 @@ async function capture(page,name){
 test('usage panel keeps an empty ledger unknown and escapes ingredient names',async({page})=>{
   await setup(page);
   await expect(panel(page)).toContainText('Belum ada histori');await expect(panel(page)).toContainText('Belum ada catatan pemakaian sebelum hari ini');
-  await expect(panel(page).locator('img')).toHaveCount(0);await expect(panel(page).locator('details')).toHaveCount(0);
+  await expect(panel(page).locator('img')).toHaveCount(0);await expect(panel(page).locator('.usage-review-detail')).toHaveCount(0);
   await expect(panel(page)).not.toContainText('Tidak ada tanda pada hari yang diperiksa');
   await page.setViewportSize({width:1440,height:1050});await capture(page,'usage-empty-desktop');
   await page.setViewportSize({width:320,height:950});await capture(page,'usage-empty-mobile');
@@ -72,9 +73,10 @@ test('stock-days column shows the estimated days left and daily rate for an ingr
   await page.reload();
   const r=(await (await page.request.get(base+'/api/bootstrap')).json()).recommendations.find(x=>x.productId===id);
   expect(Number.isInteger(r.daysRemaining)).toBe(true);expect(r.dailyUsage).toBeGreaterThan(0);
-  await expect(page.locator('#main table .stock-days')).toContainText(r.daysRemaining+' hari');
-  await expect(page.locator('#main table').first()).toContainText('kg/hari');
-  if(r.daysRemaining<=2)await expect(page.locator('#main table .stock-days')).toHaveClass(/is-low/);
+  await page.locator('.restock-calculation>summary').click();
+  await expect(page.locator('.restock-results .stock-days')).toContainText(r.daysRemaining+' hari');
+  await expect(page.locator('.restock-results')).toContainText('kg/hari');
+  if(r.daysRemaining<=2)await expect(page.locator('.restock-results .stock-days')).toHaveClass(/is-low/);
   await page.setViewportSize({width:1440,height:1050});await capture(page,'stock-days-desktop');
   await page.setViewportSize({width:320,height:950});await capture(page,'stock-days-mobile');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -85,9 +87,10 @@ test('a sustained usage level shift surfaces a pattern-change signal in the usag
   const {id,owner}=await setup(page);
   for(let i=0;i<42;i++)app.store.run('INSERT INTO daily_usage VALUES(?,?,?,?,?)',owner.workspaceId,owner.business.id,id,addDays(dayAt(),i-42),units(i<28?10:25));
   await page.reload();
+  await panel(page).locator(':scope>summary').click();
   await expect(panel(page)).toContainText('menunjukkan perubahan pola pemakaian');
   await expect(panel(page).locator('.usage-drift')).toContainText('Pola pemakaian naik');
-  await expect(panel(page).getByText('Perubahan pola',{exact:true})).toBeVisible();
+  await expect(panel(page).locator('.usage-review-item').getByText('Perubahan pola',{exact:true})).toBeVisible();
   const drift=(await (await page.request.get(base+'/api/bootstrap')).json()).recommendations.find(r=>r.productId===id).driftScreening;
   expect(drift.changed).toBe(true);expect(drift.direction).toBe('higher');
   await page.setViewportSize({width:320,height:950});await capture(page,'usage-drift-mobile');

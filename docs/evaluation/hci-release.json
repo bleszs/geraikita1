@@ -1,0 +1,36 @@
+{
+  "deploymentId": "f7fcf807-370b-4b0e-b678-434224e26f03",
+  "backend": {
+    "passed": 325,
+    "failed": 0
+  },
+  "browser": {
+    "broadRun": {
+      "cases": 47,
+      "passed": 45,
+      "failed": 2,
+      "teardownInterrupted": true
+    },
+    "affectedConfirmation": {
+      "cases": 12,
+      "passed": 11,
+      "failed": 1
+    },
+    "lastAffectedCaseConfirmation": {
+      "passed": 1,
+      "failed": 0
+    },
+    "finalPaymentAndPrint": {
+      "passed": 2,
+      "failed": 0
+    },
+    "allObservedFailuresResolved": true
+  },
+  "productionFixturesCreated": false,
+  "modelWeightsChanged": false,
+  "commitCreated": false,
+  "pushPerformed": false,
+  "designCanonChanged": false,
+  "publicFileHashesMatched": 9,
+  "staffClientMatchesLocal": true
+}

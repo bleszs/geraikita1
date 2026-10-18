@@ -1,5 +1,7 @@
 # Railway: aplikasi, Qwen dan Whisper
 
+Pembaruan 18 Oktober 2026: seluruh branch terbaru sudah tercakup pada `main` (`29565e6`) dan telah di-upload ke Railway. Web/Whisper aktif; Qwen cloud masih menunggu kapasitas karena pengguna belum bisa mengaktifkan paket berbayar. Qwen 1.5B lokal lulus uji runtime. [Status terkini dan bukti](RAILWAY_MAIN_STATUS.md). Detail status/branch versi sebelumnya di bawah merupakan riwayat; sumber rilis sekarang `main`.
+
 Pengguna memilih Railway dan meminta aplikasi beserta Qwen/pengenalan suara langsung aktif. **Web sudah online di [Gerai Kita](https://web-production-a3e13.up.railway.app)** pada akun yang diminta, dengan SQLite di volume `/data`. Build Docker Linux, pemuatan Whisper Tiny dan transkripsi melalui API terautentikasi pada database memori berhasil. **Seluruh AI belum aktif: Qwen masih tertunda karena batas resource.**
 
 Pemeriksaan akun pada 18 Oktober 2026 menemukan batas **1 GB RAM per layanan, volume 500 MB dan kuota backup volume 0**. Permintaan RAM 2 GB ditolak provider dengan pesan `The maximum allowed memory for this service is 1 GB`. Layanan `ollama` sudah dibuat tetapi belum dijalankan. Pengguna memilih peningkatan kapasitas dengan model tetap `qwen2.5:1.5b`. Pemeriksaan lanjutan menunjukkan `isTrialing=true` dan belum ada metode pembayaran: aktivasi Hobby berbayar harus diselesaikan di dashboard sebelum kapasitas dinaikkan. Label API `plan=HOBBY` saja tidak membuktikan langganan berbayar aktif.

@@ -1,3 +1,4 @@
+import {csvText,salesRows} from './csv.js';
 import {newStaffCode} from './staff-pairing.js';
 import {staffWorkspace,syncStaffMenuAvailability} from './staff-workspace.js';
 import {request} from './api.js';
@@ -12,7 +13,7 @@ import {scopeOf,saveSnapshot,readSnapshot,clearSnapshot,readAction,saveAction,cl
 let state=null,connected=true,snapshotAt='',pendingAction=null,deviceDrafts=[],busy=false,registration=null,toastTimer,values={};
 let kitchenEvents=null,kitchenEventScope='',kitchenVoiceTimer,kitchenRecordingRevisions={},kitchenUpdating=false,kitchenRenderPending=false,kitchenVoiceEpoch=0;
 const ui={auth:'register',joining:false,error:'',mobile:false,editor:null,editId:null,review:null,reviewRevision:null,reviewId:null,cancel:null,extractionReason:'',receiptUnits:u=>u?receiptUnits(u):[]};
-const voice=createVoiceCapture({onChange(){ui.voice=voice.state;if(ui.kitchenHandsfree){if(voice.state.phase==='recording')kitchenRecordingRevisions=Object.fromEntries((state?.kitchen?.orders||[]).map(o=>[o.id,o.revision]));if(voice.state.phase==='review')queueMicrotask(runSpokenKitchenCommand);if(voice.state.phase==='error')ui.kitchenHandsfree=false;}if(state)render();const selector=ui.kitchenHandsfree?'[data-action="kitchen-listen"]':voice.state.phase==='recording'?'[data-action="voice-stop"]':voice.state.phase==='review'?'#voice-text':['requesting','processing'].includes(voice.state.phase)?'[data-action="voice-cancel"]':'[data-action="voice-start"]';document.querySelector(selector)?.focus();},onTick(seconds){if(ui.kitchenHandsfree&&seconds>=4)voice.stop();const el=document.querySelector('#voice-elapsed');if(el)el.textContent=String(seconds);},async send(body,signal){
+const voice=createVoiceCapture({onLevel(text){const el=document.querySelector('#voice-level');if(el&&el.textContent!==text)el.textContent=text;},onChange(){ui.voice=voice.state;if(ui.kitchenHandsfree){if(voice.state.phase==='recording')kitchenRecordingRevisions=Object.fromEntries((state?.kitchen?.orders||[]).map(o=>[o.id,o.revision]));if(voice.state.phase==='review')queueMicrotask(runSpokenKitchenCommand);if(voice.state.phase==='error')ui.kitchenHandsfree=false;}if(state)render();const selector=ui.kitchenHandsfree?'[data-action="kitchen-listen"]':voice.state.phase==='recording'?'[data-action="voice-stop"]':voice.state.phase==='review'?'#voice-text':['requesting','processing'].includes(voice.state.phase)?'[data-action="voice-cancel"]':'[data-action="voice-start"]';document.querySelector(selector)?.focus();},onTick(seconds){if(ui.kitchenHandsfree&&seconds>=4)voice.stop();const el=document.querySelector('#voice-elapsed');if(el)el.textContent=String(seconds);},async send(body,signal){
   let response,data;try{response=await fetch('/api/transcriptions',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,csrf:state.csrf}),signal:AbortSignal.any([signal,AbortSignal.timeout(95000)])});data=await response.json();}
   catch(error){throw new Error(error.name==='TimeoutError'?'Pemrosesan suara terlalu lama. Rekam lebih singkat atau ketik pesanan.':'Server suara belum terhubung. Periksa server lalu rekam ulang, atau ketik pesanan.');}
   if(!response.ok)throw new Error(data.error||'Suara belum dapat diproses. Ketik pesanan atau coba lagi.');if(state&&!isStaff()){try{state.plan=await request('/account/plan');}catch{}}return data;
@@ -23,7 +24,7 @@ const isStaff=()=>!!state?.account?.role&&state.account.role!=='owner';
 const kitchenKey=()=>isStaff()?state.account.id+':'+state.account.roleRevision+':'+crypto.randomUUID():crypto.randomUUID();
 const route=()=>isStaff()?(location.hash==='#pengaturan'?'pengaturan':'dapur'):routes.some(r=>r[0]===location.hash.slice(1))?location.hash.slice(1):'dapur';
 const guide=createGuideController({getContext:()=>({scope:state?scopeOf(state):'guest',signedIn:!!state,role:state?.account?.role||'owner',route:route(),newAccount:Boolean(ui.guideAutoplayRequested)}),consumeNewAccount:()=>{ui.guideAutoplayRequested=false;},navigate:page=>{location.hash=page;},notify,escape:e});
-function notify(message){const box=document.querySelector('#toast');box.textContent=message;box.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>box.hidden=true,7000);}
+function notify(message){const box=document.querySelector('#toast');box.textContent=message;box.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>box.hidden=true,4000);}
 function showUpdatePrompt(){
   if(!registration?.waiting || document.querySelector('[data-action="update-app"]'))return;
   const main=document.querySelector('#main');if(!main)return;
@@ -49,11 +50,11 @@ function done(a,data){
 let staffCodeTimer;
 function clearStaffCode(){clearTimeout(staffCodeTimer);ui.staffCodeResult=null;}
 function clearStaffPairing(){clearStaffCode();ui.staffInviteEpoch=(ui.staffInviteEpoch||0)+1;ui.staffInvitePending=null;ui.staffInviteTarget=null;ui.staffInviteRevoke=null;}
-function clearDisplaySecrets(){ui.recoveryCodesResult=null;ui.kitchenExtraction=null;ui.staffReview=null;ui.staffReviewRevision=null;ui.staffReviewReason=null;ui.staffAccessEpoch=(ui.staffAccessEpoch||0)+1;ui.staffAccessResult=null;ui.staffAccessPending=null;ui.staffDelete=null;ui.staffFormOpen=false;clearStaffPairing();ui.staffRestoreFocus=null;ui.staffCreateKey=null;ui.staffCreateMeta=null;ui.staffEdit=null;ui.staffFocus=null;ui.displayEpoch=(ui.displayEpoch||0)+1;ui.displayLink=null;ui.displayCreatePending=null;ui.displayRevoke=null;ui.displayFocus=null;}
+function clearDisplaySecrets(){ui.recoveryCodesResult=null;ui.kitchenExtraction=null;ui.staffReview=null;ui.staffReviewRevision=null;ui.staffReviewReason=null;ui.staffAccessEpoch=(ui.staffAccessEpoch||0)+1;ui.staffAccessResult=null;ui.staffAccessPending=null;ui.staffDelete=null;ui.staffFormOpen=false;clearStaffPairing();ui.staffQueueFilter='all';ui.staffFinanceOpen=false;ui.usagePanelOpen=false;ui.kulakanModelOpen=false;ui.staffPayOrigin=null;ui.staffRestoreFocus=null;ui.staffCreateKey=null;ui.staffCreateMeta=null;ui.staffEdit=null;ui.staffFocus=null;ui.displayEpoch=(ui.displayEpoch||0)+1;ui.displayLink=null;ui.displayCreatePending=null;ui.displayRevoke=null;ui.displayFocus=null;}
 async function adopt(data){
   if(!state)clearDisplaySecrets();
   const before=state&&scopeOf(state);state=data;connected=true;snapshotAt=new Date().toISOString();
-  if(before&&before!==scopeOf(data)){clearDisplaySecrets();clearVoice();values={};ui.editor=null;ui.review=null;ui.cancel=null;ui.reviewId=null;ui.usageReview=null;}
+  if(before&&before!==scopeOf(data)){clearDisplaySecrets();clearVoice();values={};ui.editor=null;ui.review=null;ui.cancel=null;ui.reviewId=null;ui.usageReview=null;ui.pay=null;ui.receipt=null;}
   try{if(isStaff())await clearSnapshot();else await saveSnapshot(data);}catch(err){notify(err.message);}
   pendingAction=null;
   try{
@@ -93,6 +94,9 @@ function staffFocusBefore(){
   else if(el.matches('[data-guide-open]'))selector='[data-guide-open]';
   else if(el.name&&el.closest('[data-form]'))selector=`[data-form="${q(el.closest('[data-form]').dataset.form)}"] [name="${q(el.name)}"]`;
   if(!selector)return null;
+  if(el.dataset.kind)selector+=`[data-kind="${q(el.dataset.kind)}"]`;
+  if(el.dataset.method)selector+=`[data-method="${q(el.dataset.method)}"]`;
+  if(el.dataset.filter)selector+=`[data-filter="${q(el.dataset.filter)}"]`;
   if(task)selector=`[data-kitchen-task="${q(task.dataset.kitchenTask)}"] `+selector;
   else if(order)selector=`[data-kitchen-order="${q(order.dataset.kitchenOrder)}"] `+selector;
   return {scope:shell.dataset.staffAccount,selector,task:task?.dataset.kitchenTask,order:order?.dataset.kitchenOrder};
@@ -114,7 +118,7 @@ function render(){
   }
   if(ui.staffCodeResult){const r=state.staffInvites?.find(i=>i.id===ui.staffCodeResult.id);if(r?.status!=='active'||Date.parse(r.expiresAt)<=Date.now())clearStaffCode();}
   const page=route(),title=routes.find(r=>r[0]===page)[1],view=createViews({state,ui,values,pendingAction,deviceDrafts,connected});document.title='Gerai Kita · '+title;
-  document.querySelector('#app').innerHTML=`<div class="app-shell"><aside class="sidebar ${ui.mobile?'is-open':''}" id="sidebar"><a class="brand" href="#ringkasan"><span class="brand-mark">${icon('shop')}</span><span>gerai<span class="brand-light">kita</span><small>Tumbuh bersama.</small></span></a><div class="business-block"><span class="avatar">${e(state.business.letter)}</span><div><strong>${e(state.business.name)}</strong><span>${e(state.community.name)}</span></div></div><nav aria-label="Navigasi utama">${routes.map(([id,label,symbol])=>`<a href="#${id}" ${id===page?'aria-current="page"':''}>${icon(symbol)}<span>${label}</span></a>`).join('')}</nav><div class="sidebar-bottom"><button class="button secondary" data-action="logout" ${!connected?'disabled':''}>${icon('logout')}<span>Keluar akun</span></button><span class="sidebar-foot">Catatan milik ${e(state.business.name)}</span></div></aside><div class="workspace"><header class="topbar"><button class="icon-button mobile-toggle" data-action="menu" aria-label="${ui.mobile?'Tutup':'Buka'} navigasi" aria-expanded="${ui.mobile}" aria-controls="sidebar">${icon(ui.mobile?'close':'menu')}</button><span class="topbar-title">${title}</span><div class="topbar-actions"><button class="icon-button" data-action="refresh" aria-label="Perbarui data">${icon('refresh')}</button><button class="icon-button" data-action="theme" aria-label="Ubah tema">${icon('moon')}</button><span class="active-business"><strong>${e(state.business.name)}</strong></span></div></header><main id="main" tabindex="-1">${!connected?notice(`Server belum terhubung. Data terakhir ${e(new Date(snapshotAt).toLocaleString('id-ID'))}. Tindakan server perlu diperiksa saat tersambung kembali.`,'warn')+`<div class="actions"><button class="button secondary" data-action="reconnect">Hubungkan & muat ulang</button></div>`:''}${registration?notice('Versi aplikasi baru tersedia. Simpan isian sebelum memuat ulang.')+`<button class="text-link" data-action="update-app">Muat ulang aplikasi</button>`:''}${pendingPanel()}<div class="date-line">${e(new Date(state.date+'T12:00:00Z').toLocaleDateString('id-ID',{dateStyle:'full'}))}</div>${view[page]()}<footer class="page-footer"><span>Keputusan usahamu tetap di tanganmu.</span><span>${e(state.community.name)}</span></footer></main><nav class="quick-nav" aria-label="Navigasi cepat">${[['dapur','Dapur','shop'],['pesanan','Catat','plus'],['stok','Stok','box'],['kelompok','Bersama','people']].map(([id,label,sym])=>`<a href="#${id}" ${page===id?'aria-current="page"':''}>${icon(sym)}<span>${label}</span></a>`).join('')}<button data-action="menu" aria-label="Menu navigasi">${icon('menu')}<span>Menu</span></button></nav></div></div>`;
+  document.querySelector('#app').innerHTML=`<div class="app-shell"><aside class="sidebar ${ui.mobile?'is-open':''}" id="sidebar"><a class="brand" href="#ringkasan"><span class="brand-mark"><img src="/assets/logo.svg" alt="" width="48" height="40"></span><span>gerai<span class="brand-light">kita</span><small>Tumbuh bersama.</small></span></a><div class="business-block"><span class="avatar">${e(state.business.letter)}</span><div><strong>${e(state.business.name)}</strong><span>${e(state.community.name)}</span></div></div><nav aria-label="Navigasi utama">${routes.map(([id,label,symbol])=>`<a href="#${id}" ${id===page?'aria-current="page"':''}>${icon(symbol)}<span>${label}</span></a>`).join('')}</nav><div class="sidebar-bottom"><button class="button secondary" data-action="logout" ${!connected?'disabled':''}>${icon('logout')}<span>Keluar akun</span></button><span class="sidebar-foot">Catatan milik ${e(state.business.name)}</span></div></aside><div class="workspace"><header class="topbar"><button class="icon-button mobile-toggle" data-action="menu" aria-label="${ui.mobile?'Tutup':'Buka'} navigasi" aria-expanded="${ui.mobile}" aria-controls="sidebar">${icon(ui.mobile?'close':'menu')}</button><span class="topbar-title">${title}</span><div class="topbar-actions"><button class="icon-button" data-action="refresh" aria-label="Perbarui data">${icon('refresh')}</button><button class="icon-button" data-action="theme" aria-label="Ubah tema">${icon('moon')}</button><span class="active-business"><strong>${e(state.business.name)}</strong></span></div></header><main id="main" tabindex="-1">${!connected?notice(`Server belum terhubung. Data terakhir ${e(new Date(snapshotAt).toLocaleString('id-ID'))}. Tindakan server perlu diperiksa saat tersambung kembali.`,'warn')+`<div class="actions"><button class="button secondary" data-action="reconnect">Hubungkan & muat ulang</button></div>`:''}${registration?notice('Versi aplikasi baru tersedia. Simpan isian sebelum memuat ulang.')+`<button class="text-link" data-action="update-app">Muat ulang aplikasi</button>`:''}${pendingPanel()}<div class="date-line">${e(new Date(state.date+'T12:00:00Z').toLocaleDateString('id-ID',{dateStyle:'full'}))}</div>${view[page]()}<footer class="page-footer"><span>Keputusan usahamu tetap di tanganmu.</span><span>${e(state.community.name)}</span></footer></main><nav class="quick-nav" aria-label="Navigasi cepat">${[['dapur','Dapur','shop'],['pesanan','Catat','plus'],['stok','Stok','box'],['kelompok','Bersama','people']].map(([id,label,sym])=>`<a href="#${id}" ${page===id?'aria-current="page"':''}>${icon(sym)}<span>${label}</span></a>`).join('')}<button data-action="menu" aria-label="Menu navigasi">${icon('menu')}<span>Menu</span></button></nav></div></div>`;
   lockControls();receiptPreview();guide.sync();syncKitchenEvents();restoreKitchenFocus();
   if(ui.staffFocus){const selector=ui.staffFocus;ui.staffFocus=null;document.querySelector(selector)?.focus({preventScroll:true});}
   if(ui.stationFocus){const station=ui.stationFocus;ui.stationFocus=null;Array.from(document.querySelectorAll('[data-form="kitchen-station"]')).find(f=>f.elements.station.value===station)?.querySelector('[name="agingMinutes"]')?.focus({preventScroll:true});}
@@ -123,8 +127,8 @@ function render(){
 function lockControls(){
   if(!state)return;document.querySelector('#main')?.setAttribute('aria-busy',String(busy));
   document.querySelectorAll('#main form').forEach(f=>{const localDraft=!connected&&f.dataset.form==='extract';if(busy||pendingAction||!connected)f.querySelectorAll('input,select,textarea,button').forEach(c=>{if(!localDraft||c.tagName==='BUTTON')c.disabled=true;});});
-  const readonly=new Set(['staff-code-copy','staff-code-hide','staff-code-cancel','staff-code-cancel-revoke','staff-new-order','staff-queue','display-hide-link','display-copy','display-cancel-revoke','theme','menu','reconnect','refresh','update-app','export-sales','export-receipts','back-order','manual-order','add-order','remove-order','resume-draft','delete-draft','confirm-order','review-catalog','close-editor','close-cancel','copy-invite','close-usage-review','recovery-copy','recovery-hide']);
-  document.querySelectorAll('[data-action]').forEach(b=>{if(busy||pendingAction&&!['staff-new-order','staff-queue','theme','menu','reconnect','refresh','retry-action','logout','export-sales','export-receipts','update-app'].includes(b.dataset.action)||!connected&&!readonly.has(b.dataset.action))b.disabled=true;});
+  const readonly=new Set(['staff-filter','staff-code-copy','staff-code-hide','staff-code-cancel','staff-code-cancel-revoke','staff-new-order','staff-queue','display-hide-link','display-copy','display-cancel-revoke','theme','menu','reconnect','refresh','update-app','export-sales','export-receipts','back-order','manual-order','add-order','remove-order','resume-draft','delete-draft','confirm-order','review-catalog','close-editor','close-cancel','copy-invite','close-usage-review','recovery-copy','recovery-hide']);
+  document.querySelectorAll('[data-action]').forEach(b=>{if(busy||pendingAction&&!['staff-filter','staff-new-order','staff-queue','theme','menu','reconnect','refresh','retry-action','logout','export-sales','export-receipts','update-app'].includes(b.dataset.action)||!connected&&!readonly.has(b.dataset.action))b.disabled=true;});
   if(pendingAction)document.querySelectorAll('[data-review]').forEach(c=>c.disabled=true);
   if(busy||pendingAction||!connected)document.querySelectorAll('#main [form="staff-review-form"]').forEach(c=>c.disabled=true);
   if(voice.active){document.querySelectorAll('#extract-form button,[data-form="staff-extract"] button,[data-action="manual-order"],[data-action="staff-manual-order"]').forEach(c=>c.disabled=true);}
@@ -136,7 +140,7 @@ function receiptPreview(){
   if(!p||!r.inputUnit||r.qty===''||r.qty===undefined||r.unitPrice===''||r.unitPrice===undefined){target.textContent='Pilih bahan, satuan, jumlah dan harga untuk melihat hasil penerimaan.';return;}
   try{const x=receiptMeasurement(p.unit,r.inputUnit,Number(r.qty),Number(r.unitPrice));target.textContent=`${n(x.inputQty)} ${x.inputUnit} = ${n(x.qty)} ${p.unit}. Saldo setelah diterima: ${n(state.stock[p.id]+x.qty)} ${p.unit}. Total ${m(x.total)}.`;}catch(err){target.textContent=err.message;}
 }
-function csv(filename,rows){const cell=v=>{let t=String(v??'');if(/^\s*[=+@-]/.test(t))t="'"+t;return '"'+t.replaceAll('"','""')+'"';};const url=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);}
+function csv(filename,rows){const url=URL.createObjectURL(new Blob([csvText(rows)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 async function confirmOrder(){
   validateDraft(ui.review,state.menu);
   if(!connected){const id=ui.reviewId||crypto.randomUUID();await putDraft({id,scope:scopeOf(state),status:'draft',createdAt:new Date().toISOString(),label:ui.review.map(i=>`${i.qty} ${state.menu.find(m=>m.id===i.id).name}`).join(', '),payload:{items:structuredClone(ui.review),catalogRevision:ui.reviewRevision,idempotencyKey:id}});deviceDrafts=(await listDrafts()).filter(d=>d.scope===scopeOf(state));ui.review=null;notify('Draft tersimpan di perangkat. Stok dan penjualan belum berubah.');return;}
@@ -251,8 +255,15 @@ document.addEventListener('submit',async event=>{
     else if(kind==='kitchen-station'){values['station:'+b.station]={...b};await request('/kitchen/stations',{station:b.station,cooks:Number(b.cooks),equipment:b.equipment===''?null:Number(b.equipment),agingMinutes:Number(b.agingMinutes),revision:Number(b.revision)},state.csrf);delete values['station:'+b.station];await refresh();notify('Kapasitas stasiun '+b.station+' tersimpan. Giliran antrean mengikuti kapasitas dan batas tunggu baru.');}
     else if(kind==='usage-decision'){const editor=ui.usageReview;if(!editor)throw new Error('Buka kembali pemeriksaan dari tanggal yang dipilih.');await request('/usage-reviews',{...editor,decision:b.decision,note:b.note||'',confirmed:b.confirmed==='on'},state.csrf);await refresh();ui.usageReview=null;values['usage-decision']={};notify('Hasil pemeriksaan tersimpan. Stok dan transaksi tidak diubah.');}
     else if(kind==='profile'){await request('/account/profile',{businessName:b.businessName},state.csrf);await refresh();values.profile={};notify('Nama usaha tersimpan.');}
+    else if(kind==='withdraw'){await request('/withdrawals',{destinationType:b.destinationType,destinationDetail:b.destinationDetail,amount:Number(b.amount),idempotencyKey:crypto.randomUUID()},state.csrf);await refresh();values.withdraw={};notify('Penarikan berhasil (demo). Saldo sudah diperbarui.');}
     else if(kind==='password'){if(b.newPassword!==b.repeatPassword)throw new Error('Ulangan kata sandi baru belum sama.');const result=await request('/account/password',{currentPassword:b.currentPassword,newPassword:b.newPassword},state.csrf);await refresh();notify(`Kata sandi tersimpan. ${result.revokedSessions} sesi lain dikeluarkan.`);}
     else if(kind==='recovery-codes'){const result=await request('/account/recovery-codes',{confirmed:b.confirmed==='on'},state.csrf);ui.recoveryCodesResult=result.codes;await refresh();notify('Kode pemulihan baru dibuat. Salin dan simpan sekarang; kode lama tidak berlaku lagi.');}
+    else if(kind==='community-create'){await request('/community/create',{communityName:b.communityName},state.csrf);await refresh();values['community-create']={};notify('Kelompok dibuat. Kode undangan siap dibagikan.');}
+    else if(kind==='community-join'){
+      if(pendingAction||deviceDrafts.length)throw new Error('Selesaikan atau hapus draft dan periksa catatan tertunda sebelum berpindah kelompok.');
+      await request('/community/join',{inviteCode:b.inviteCode,confirmed:b.confirmed==='on',expectedWorkspace:state.workspaceId},state.csrf);
+      await adopt(await request('/bootstrap'));values['community-join']={};notify('Berhasil bergabung. Periksa kebutuhan sebelum membagikannya ke kelompok.');
+    }
     else if(kind==='community-settings'){await request('/community/settings',{communityName:b.communityName},state.csrf);await refresh();values['community-settings']={};notify('Nama kelompok tersimpan.');}
     else if(kind==='invite'){if(b.confirmed!=='on')throw new Error('Periksa dampak mengganti kode terlebih dahulu.');await request('/community/invite',{expectedCode:state.community.inviteCode},state.csrf);await refresh();values.invite={};notify('Kode undangan diganti. Bagikan kode terbaru kepada anggota baru.');}
     else if(kind==='ingredient'){payload={name:b.name,unit:b.unit,min:Number(b.min),storageNote:b.storageNote,catalogRevision:state.catalogRevision};await request('/ingredients'+(ui.editId?'/'+ui.editId:''),payload,state.csrf);await refresh();ui.editor=null;values.ingredient={};}
@@ -285,6 +296,7 @@ document.addEventListener('click',async event=>{
   }
   const b=event.target.closest('[data-action]');if(!b)return;event.preventDefault();const action=b.dataset.action;if(action==='kitchen-listen'&&ui.kitchenHandsfree){clearVoice();render();return;}if(busy)return;
   if(isStaff()){const focused=staffFocusBefore();if(focused)ui.staffRestoreFocus=focused;}
+  if(action==='staff-filter'){if(!isStaff())return;ui.staffQueueFilter=b.dataset.filter;render();return;}
   if(action==='staff-new-order'||action==='staff-queue'){
     const target=action==='staff-new-order'?(document.querySelector('[data-form="staff-extract"] [name="text"]')||document.querySelector('#staff-order-entry')):document.querySelector('#kitchen-queue-title');
     if(target){target.focus({preventScroll:true});const header=document.querySelector('.staff-shell .topbar');scrollBy({top:target.getBoundingClientRect().top-(header?.getBoundingClientRect().bottom||0)-32,behavior:'instant'});}ui.staffRestoreFocus=null;return;
@@ -354,7 +366,7 @@ document.addEventListener('click',async event=>{
   if(action==='copy-invite'){try{await navigator.clipboard.writeText(state.community.inviteCode);notify('Kode kelompok disalin.');}catch{notify('Salin kode yang ditampilkan pada pengaturan kelompok.');}return;}
   if(action==='recovery-copy'){if(!ui.recoveryCodesResult){render();return;}try{await navigator.clipboard.writeText(ui.recoveryCodesResult.join('\n'));notify('Kode pemulihan disalin. Simpan di tempat aman di luar aplikasi.');}catch{notify('Salin kode yang ditampilkan.');}return;}
   if(action==='recovery-hide'){ui.recoveryCodesResult=null;render();document.querySelector('#recovery-section h2')?.focus?.();notify('Kode pemulihan disembunyikan. Pastikan sudah kamu simpan.');return;}
-  if(action.startsWith('export-')){if(action==='export-sales')csv('penjualan.csv',[['ID','Tanggal','Menu','Total (Rp)','Status'],...state.transactions.map(t=>[t.id,t.date,t.items.map(i=>`${i.qty} ${i.name}`).join(', '),t.total,t.cancelled_at?'Dibatalkan':'Tercatat'])]);else csv('barang-masuk.csv',[['ID','Bahan','Jumlah stok','Satuan stok','Jumlah diterima asli','Satuan diterima asli','Harga satuan diterima','Total','Status','Alasan'],...state.stockReceipts.map(r=>[r.id,r.product_name,r.qty,r.product_unit,r.input_quantity==null?r.qty:r.input_quantity/10000,r.input_unit||r.product_unit,r.input_unit_price??r.unit_price,r.total,r.cancelled_at?'Dibatalkan':'Diterima',r.cancel_reason])]);return;}
+  if(action.startsWith('export-')){if(action==='export-sales')csv('penjualan.csv',salesRows(state.transactions));else csv('barang-masuk.csv',[['ID','Bahan','Jumlah stok','Satuan stok','Jumlah diterima asli','Satuan diterima asli','Harga satuan diterima','Total','Status','Alasan'],...state.stockReceipts.map(r=>[r.id,r.product_name,r.qty,r.product_unit,r.input_quantity==null?r.qty:r.input_quantity/10000,r.input_unit||r.product_unit,r.input_unit_price??r.unit_price,r.total,r.cancelled_at?'Dibatalkan':'Diterima',r.cancel_reason])]);return;}
   if(pendingAction&&!['reconnect','refresh','retry-action','logout'].includes(action)){notify('Periksa catatan tertunda terlebih dahulu.');return;}
   if(['new-ingredient','edit-ingredient','new-menu','edit-menu','new-receipt'].includes(action)){if(!connected)return;const type=action.includes('ingredient')?'ingredient':action.includes('menu')?'menu':'receipt';ui.editor=type;ui.editId=b.dataset.id||null;values[type]={};render();document.querySelector('.inventory-editor')?.scrollIntoView({block:'start'});return;}
   if(action==='close-editor'){ui.editor=null;render();return;}
@@ -388,6 +400,38 @@ document.addEventListener('click',async event=>{
       if(!pendingAction){ui.staffReview=null;ui.staffReviewReason=null;values['staff-extract']={};values['staff-review']={};}
     }catch(err){notify(err.message);}finally{busy=false;render();}return;
   }
+  if(action==='staff-pay'){ui.staffPayOrigin=staffFocusBefore();
+    const kind=b.dataset.kind;
+    if(kind==='complete'){
+      const o=state.kitchen?.orders.find(x=>x.id===b.dataset.id);if(!o)return;
+      ui.pay={kind:'complete',orderId:o.id,revision:Number(b.dataset.revision),items:o.items.filter(i=>!i.voided).map(i=>({name:i.name,qty:i.qty,unitPrice:i.unitPrice})),total:o.total,label:o.label,method:null};
+    }else{
+      if(!ui.staffReview?.length)return;
+      if(ui.staffReviewRevision!==state.catalogRevision)return notify('Katalog berubah. Proses ulang pesanan sebelum mengirim.');
+      const items=structuredClone(ui.staffReview);
+      if(items.some(i=>!i.id||!Number.isInteger(i.qty)||i.qty<1||i.qty>99||i.note?.length>500))return notify('Periksa menu, jumlah 1–99, dan catatan setiap item.');
+      const detailed=items.map(i=>{const mnu=state.menu.find(m=>m.id===i.id);return {id:i.id,qty:i.qty,note:i.note||'',name:mnu?.name||i.id,unitPrice:mnu?.price||0};});
+      ui.pay={kind:'direct',rawItems:items.map(i=>({id:i.id,qty:i.qty,note:i.note||''})),items:detailed,total:detailed.reduce((a,i)=>a+i.unitPrice*i.qty,0),label:(values['staff-review']||{}).label||'',revision:ui.staffReviewRevision,method:null};
+    }
+    render();document.querySelector('#pay-title')?.focus();return;
+  }
+  if(action==='pay-method'){if(ui.pay){ui.pay.method=b.dataset.method;render();document.querySelector('[data-action="pay-confirm"]')?.focus();}return;}
+  if(action==='pay-cancel'){const origin=ui.staffPayOrigin;ui.pay=null;ui.staffPayOrigin=null;render();restoreStaffFocus(origin);return;}
+  if(action==='close-receipt'){ui.receipt=null;render();return;}
+  if(action==='print-receipt'){window.print();return;}
+  if(action==='pay-confirm'){
+    const p=ui.pay;if(!p?.method)return;
+    busy=true;lockControls();
+    try{
+      if(p.kind==='complete')await durable('kitchenChange',`/kitchen/orders/${p.orderId}/actions`,{action:'complete',revision:p.revision,paymentMethod:p.method,idempotencyKey:kitchenKey()},'Pembayaran & penyerahan: '+p.label);
+      else await durable('staffSale','/transactions',{items:p.rawItems,catalogRevision:p.revision,paymentMethod:p.method,idempotencyKey:kitchenKey()},'Penjualan langsung: '+p.items.map(i=>`${i.qty} ${i.name}`).join(', '));
+      if(!pendingAction){
+        ui.receipt={businessName:state.business.name,cashier:state.account.name,items:p.items,total:p.total,label:p.label,paymentMethod:p.method,fee:Math.round(p.total*0.1),created_at:new Date().toISOString(),id:p.orderId||crypto.randomUUID()};
+        if(p.kind==='direct'){ui.staffReview=null;ui.staffReviewReason=null;values['staff-extract']={};values['staff-review']={};}
+      }
+    }catch(err){notify(err.message);}finally{ui.pay=null;busy=false;render();}
+    return;
+  }
   if(action==='back-order'){ui.review=null;render();return;}
   if(action==='add-order'){ui.review.push({id:state.menu[0].id,qty:1,note:''});ui.reviewId=null;render();return;}
   if(action==='remove-order'){if(ui.review.length>1)ui.review.splice(Number(b.dataset.index),1);ui.reviewId=null;render();return;}
@@ -402,7 +446,7 @@ document.addEventListener('click',async event=>{
     else if(action==='reconnect'||action==='refresh'){await refresh();if(!ui.kitchenLive){kitchenEvents?.close();kitchenEvents=null;kitchenEventScope='';}}
     else if(action==='retry-action'){const original=pendingAction;await refresh();if(pendingAction){if(original.scope!==scopeOf(state))throw new Error('Masuk ke akun asal untuk memeriksa catatan.');await sendAction(original);}else notify('Catatan ditemukan di server. Tidak dikirim dua kali.');}
     else if(action==='kitchen-station-latest'){const station=b.dataset.station;delete values['station:'+station];ui.stationFocus=station;}
-    else if(action==='logout'){clearDisplaySecrets();clearVoice();await request('/auth/logout',{},state.csrf);await clearSnapshot();state=null;pendingAction=null;values={};deviceDrafts=[];ui.displayLink=null;ui.displayCreatePending=null;ui.displayRevoke=null;ui.auth='login';ui.review=null;ui.editor=null;ui.cancel=null;ui.usageReview=null;ui.recoveryCodesResult=null;}
+    else if(action==='logout'){clearDisplaySecrets();clearVoice();await request('/auth/logout',{},state.csrf);let storageWarning='';try{await clearSnapshot();}catch{storageWarning='Kamu sudah keluar. Penyimpanan perangkat belum dapat dibersihkan; tutup tab ini jika memakai perangkat bersama.';}state=null;pendingAction=null;values={};deviceDrafts=[];ui.displayLink=null;ui.displayCreatePending=null;ui.displayRevoke=null;ui.auth='login';ui.review=null;ui.editor=null;ui.cancel=null;ui.usageReview=null;ui.pay=null;ui.receipt=null;ui.recoveryCodesResult=null;ui.error='';document.querySelector('#toast').hidden=true;if(storageWarning)notify(storageWarning);}
     else if(action==='confirm-order')await confirmOrder();
     else if(action==='review-catalog'){await refresh();ui.reviewRevision=state.catalogRevision;}
     else if(action==='delete-draft'){await removeDraft(b.dataset.id,true);deviceDrafts=(await listDrafts()).filter(d=>d.scope===scopeOf(state));}
@@ -476,3 +520,18 @@ async function initialize(){
   catch(err){if(err.transport){try{const snapshot=await readSnapshot();if(snapshot?.data.mode==='live'){state=snapshot.data;connected=false;snapshotAt=snapshot.savedAt;pendingAction=await readAction(scopeOf(state));deviceDrafts=(await listDrafts()).filter(d=>d.scope===scopeOf(state));render();return;}}catch{}ui.error='Server belum terhubung. Buka aplikasi saat server aktif untuk masuk.';}else if(err.status!==401)ui.error=err.message;render();}
 }
 initialize();
+
+document.addEventListener('toggle',event=>{
+  const el=event.target;if(!el.isConnected)return;
+  for(const [selector,key] of [['details.staff-finance','staffFinanceOpen'],['details.usage-review','usagePanelOpen'],['details.kulakan-model','kulakanModelOpen']])if(el.matches(selector))ui[key]=el.open;
+},true);
+document.addEventListener('keydown',event=>{
+  const modal=document.querySelector('.staff-shell .overlay[role="dialog"]');if(!modal)return;
+  if(event.key==='Escape'&&ui.pay&&!busy&&!pendingAction){event.preventDefault();const origin=ui.staffPayOrigin;ui.pay=null;ui.staffPayOrigin=null;render();restoreStaffFocus(origin);return;}
+  if(event.key!=='Tab')return;
+  const controls=[...modal.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href],[tabindex="0"]')].filter(el=>el.getClientRects().length);
+  if(!controls.length)return;
+  const first=controls[0],last=controls.at(-1),current=document.activeElement;
+  if(event.shiftKey&&(current===first||!controls.includes(current))){event.preventDefault();last.focus();}
+  else if(!event.shiftKey&&(current===last||!controls.includes(current))){event.preventDefault();first.focus();}
+});

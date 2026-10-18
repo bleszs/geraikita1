@@ -6,8 +6,9 @@ import { createOperations } from './operations.mjs';
 import { createCollective } from './collective.mjs';
 import { createSurplus } from './surplus.mjs';
 import {createConfiguration} from './configuration.mjs';
-import { requireValue, dayAt, units, quantity } from './common.mjs';
+import { requireValue, dayAt, units, quantity, PAYMENT_METHODS, applicationFee } from './common.mjs';
 import { forecast } from './forecast.mjs';
+import {loadKulakanModel,kulakanModelSummary} from './ml/kulakan-model.mjs';
 import { optimize } from './optimizer.mjs';
 import {createForecastRegistry} from './forecast-registry.mjs';
 import {screenUsage} from './ml/usage-anomalies.mjs';
@@ -48,6 +49,8 @@ export function createService(store) {
     const catalog=store.ingredients(s);
     const row=get('SELECT * FROM businesses WHERE workspace_id=? AND id=?',...scope(s));
     const business={id:row.id,name:row.name,shortName:row.short_name,letter:row.letter};
+    const workspace = get('SELECT * FROM workspaces WHERE id=?', s.workspace_id);
+    const syntheticForecast=JSON.parse(workspace.settings||'{}').forecastDataSource==='synthetic_demo'||row.name.startsWith('[DEMO]');
     const businessState = get('SELECT * FROM business_state WHERE workspace_id=? AND business_id=?', ...scope(s));
     const stock = Object.fromEntries(all('SELECT * FROM inventory WHERE workspace_id=? AND business_id=?', ...scope(s)).map(i => [i.product_id, quantity(i.quantity)]));
     const availableStock = Object.fromEntries(catalog.map(p => [p.id, quantity(operations.available(s, p.id))]));
@@ -57,7 +60,7 @@ export function createService(store) {
       const history = all('SELECT date,quantity FROM daily_usage WHERE workspace_id=? AND business_id=? AND product_id=? ORDER BY date', ...scope(s), p.id)
         .map(i => ({ date: i.date, qty: quantity(i.quantity) }));
       return { productId: p.id, ...forecast(history, availableStock[p.id], asOf, 2, p.unit,
-        models.get({workspaceId:s.workspace_id,businessId:s.business_id,productId:p.id,unit:p.unit})),
+        models.get({workspaceId:s.workspace_id,businessId:s.business_id,productId:p.id,unit:p.unit}),syntheticForecast?null:loadKulakanModel()),
         usageScreening: screenUsage(history, {asOf, unit:p.unit}),
         driftScreening: screenDrift(history, {asOf, unit:p.unit}) };
     });
@@ -67,13 +70,14 @@ export function createService(store) {
     const audit = all('SELECT message,created_at,actor_id,actor_name,actor_role,actor_revision FROM audit WHERE workspace_id=? AND business_id=? ORDER BY rowid DESC LIMIT 100', ...scope(s)).map(a => ({ ...a, actor:a.actor_id?{id:a.actor_id,name:a.actor_name,role:a.actor_role,revision:a.actor_revision}:null, time: new Date(a.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) }));
     const stockReceipts = all('SELECT * FROM stock_receipts WHERE workspace_id=? AND business_id=? ORDER BY created_at DESC', ...scope(s)).map(r => ({ ...r, qty: quantity(r.quantity) }));
     const movements = all('SELECT product_id,delta,reason,ref,created_at FROM movements WHERE workspace_id=? AND business_id=? ORDER BY rowid DESC LIMIT 100', ...scope(s)).map(m => ({ ...m, qty: quantity(m.delta) }));
-    const workspace = get('SELECT * FROM workspaces WHERE id=?', s.workspace_id);
     const sharedProduct=JSON.parse(workspace.settings || '{}').product || null;
-    return { kitchen:kitchen.snapshot(s), mode: 'live', workspaceId: s.workspace_id, workspaceEpoch: workspace.created_at, business, community:{name:workspace.name,canManage:workspace.owner_business_id===s.business_id,inviteCode:workspace.owner_business_id===s.business_id ? workspace.join_code : null}, sharedProduct, catalog, menu: store.menus(s), catalogRevision: businessState.catalog_revision, stock, availableStock, stockReceipts, movements, transactions, recommendations, usageReviews:usageDecisions.list(s,recommendations), demand: ownDemand.qty || recommendations.find(r=>r.productId===sharedProduct?.id)?.amount || null, shared: !!ownDemand.active && ownDemand.expires_at > Date.now(), needsReview: !cycles.locked(s) && ownDemand.stock_revision !== businessState.stock_revision, budget: ownDemand.budget, group: group(s), collectiveHistory:cycles.history(s), offers, transfers, audit, date: dayAt(), csrf: s.csrf };
+    return { kulakanModel:kulakanModelSummary(), kitchen:kitchen.snapshot(s), mode: 'live', workspaceId: s.workspace_id, workspaceEpoch: workspace.created_at, business, community:{enabled:JSON.parse(workspace.settings||'{}').communityEnabled!==false,name:JSON.parse(workspace.settings||'{}').communityEnabled!==false?workspace.name:'Belum bergabung kelompok',canManage:workspace.owner_business_id===s.business_id,inviteCode:JSON.parse(workspace.settings||'{}').communityEnabled!==false&&workspace.owner_business_id===s.business_id ? workspace.join_code : null}, sharedProduct, catalog, menu: store.menus(s), catalogRevision: businessState.catalog_revision, stock, availableStock, stockReceipts, movements, transactions, recommendations, usageReviews:usageDecisions.list(s,recommendations), demand: ownDemand.qty || recommendations.find(r=>r.productId===sharedProduct?.id)?.amount || null, shared: !!ownDemand.active && ownDemand.expires_at > Date.now(), needsReview: !cycles.locked(s) && ownDemand.stock_revision !== businessState.stock_revision, budget: ownDemand.budget, group: group(s), collectiveHistory:cycles.history(s), offers, transfers, audit, finance: finance(s), date: dayAt(), csrf: s.csrf };
   }
   function transaction(s, body) {
     requireValue(typeof body.idempotencyKey === 'string' && body.idempotencyKey.length >= 8 && body.idempotencyKey.length <= 100, 'Kunci transaksi tidak valid.');
     requireValue(Array.isArray(body.items) && body.items.length >= 1 && body.items.length <= 20, 'Isi minimal satu menu.');
+    const paymentMethod = body.paymentMethod ?? 'tunai';
+    requireValue(PAYMENT_METHODS.includes(paymentMethod), 'Metode pembayaran tidak dikenal.');
     const items = body.items.map(i => {
       requireValue(i && typeof i === 'object' && !Array.isArray(i), 'Item menu tidak valid.');
       requireValue(typeof i.id === 'string' && Number.isInteger(i.qty) && i.qty >= 1 && i.qty <= 99, 'Menu atau jumlah tidak valid.');
@@ -99,10 +103,11 @@ export function createService(store) {
         movement(...scope(s), product, -qty, 'sale', id);
       }
       const snapshots = items.map(i => { const m = menus.find(m => m.id === i.id); return { ...i, name: m.name, unitPrice: m.price }; });
-      run('INSERT INTO sales(id,workspace_id,business_id,idem,fingerprint,items,total,date,created_at,cancelled_at,usage_snapshot) VALUES(?,?,?,?,?,?,?,?,?,?,?)', id, ...scope(s), body.idempotencyKey, fingerprint, JSON.stringify(snapshots), total(snapshots, menus), date, now, null, JSON.stringify(used));
+      const gross = total(snapshots, menus), fee = applicationFee(gross), net = gross - fee;
+      run('INSERT INTO sales(id,workspace_id,business_id,idem,fingerprint,items,total,date,created_at,cancelled_at,usage_snapshot,payment_method,fee,net) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)', id, ...scope(s), body.idempotencyKey, fingerprint, JSON.stringify(snapshots), gross, date, now, null, JSON.stringify(used), paymentMethod, fee, net);
       stockChanged(s);
       log(...scope(s), `Transaksi ${id.slice(0, 8)} dikonfirmasi; stok berkurang sesuai resep.`);
-      return { id, items: snapshots, total: total(snapshots, menus), duplicate: false };
+      return { id, items: snapshots, total: gross, fee, net, paymentMethod, duplicate: false };
     });
   }
   function cancelSale(s, id) {
@@ -199,5 +204,35 @@ export function createService(store) {
       return { duplicate: false };
     });
   }
-  return store.attribute({ kitchen, requests, bootstrap, saveUsageReview:usageDecisions.save, transaction, cancelSale, demand, group, approval, requestTransfer, transferDecision, ...operations, ...configuration, createOffer:surplus.create, withdrawOffer:surplus.withdraw, finalizeCollective:cycles.finalize, receiveCollective:cycles.receive, cancelCollectiveReceipt:cycles.cancelReceipt, cancelCollective:cycles.cancel, nextCycle:cycles.next });
+  // Demo wallet: net takings (total - 10% fee) on non-cancelled sales, less
+  // completed withdrawals. Cashier may view it; only the owner withdraws.
+  function finance(s) {
+    const sales = all('SELECT total,fee,net,payment_method,date,cancelled_at FROM sales WHERE workspace_id=? AND business_id=?', ...scope(s));
+    const active = sales.filter(x => !x.cancelled_at), today = dayAt();
+    const netOf = x => x.net ?? (x.total - (x.fee || 0)), sum = (arr, f) => arr.reduce((a, x) => a + f(x), 0);
+    const todays = active.filter(x => x.date === today);
+    const withdrawals = all('SELECT id,amount,destination_type,destination_detail,status,created_at FROM withdrawals WHERE workspace_id=? AND business_id=? ORDER BY created_at DESC', ...scope(s));
+    const withdrawn = sum(withdrawals.filter(w => w.status === 'completed'), w => w.amount);
+    const byMethod = {}; for (const x of todays) { const k = x.payment_method || 'tunai'; byMethod[k] = (byMethod[k] || 0) + x.total; }
+    return { balance: sum(active, netOf) - withdrawn, withdrawn, lifetimeNet: sum(active, netOf),
+      today: { gross: sum(todays, x => x.total), fee: sum(todays, x => x.fee || 0), net: sum(todays, netOf), count: todays.length, byMethod },
+      withdrawals: withdrawals.slice(0, 20) };
+  }
+  function withdraw(s, body) {
+    requireValue(typeof body.idempotencyKey === 'string' && body.idempotencyKey.length >= 8 && body.idempotencyKey.length <= 100, 'Kunci penarikan tidak valid.');
+    requireValue(['bank', 'ewallet'].includes(body.destinationType), 'Pilih tujuan bank atau e-wallet.');
+    const detail = String(body.destinationDetail ?? '').trim();
+    requireValue(detail.length >= 2 && detail.length <= 120, 'Isi nomor rekening atau e-wallet tujuan (2–120 karakter).');
+    requireValue(Number.isInteger(body.amount) && body.amount > 0, 'Jumlah penarikan tidak valid.');
+    return atomic(() => {
+      const previous = get('SELECT * FROM withdrawals WHERE workspace_id=? AND business_id=? AND idem=?', ...scope(s), body.idempotencyKey);
+      if (previous) return { id: previous.id, amount: previous.amount, duplicate: true };
+      requireValue(body.amount <= finance(s).balance, 'Jumlah melebihi saldo yang tersedia.', 409);
+      const id = randomUUID(), now = new Date().toISOString();
+      run('INSERT INTO withdrawals(id,workspace_id,business_id,idem,amount,destination_type,destination_detail,status,created_at) VALUES(?,?,?,?,?,?,?,?,?)', id, ...scope(s), body.idempotencyKey, body.amount, body.destinationType, detail, 'completed', now);
+      log(...scope(s), `Penarikan saldo ${body.amount} ke ${body.destinationType} berhasil (demo).`);
+      return { id, amount: body.amount, duplicate: false };
+    });
+  }
+  return store.attribute({ kitchen, requests, bootstrap, finance, withdraw, saveUsageReview:usageDecisions.save, transaction, cancelSale, demand, group, approval, requestTransfer, transferDecision, ...operations, ...configuration, createOffer:surplus.create, withdrawOffer:surplus.withdraw, finalizeCollective:cycles.finalize, receiveCollective:cycles.receive, cancelCollectiveReceipt:cycles.cancelReceipt, cancelCollective:cycles.cancel, nextCycle:cycles.next });
 }

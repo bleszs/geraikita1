@@ -7,3 +7,57 @@
 .staff-code-result,.staff-code-history,[data-staff-legacy]{border-top:1px solid var(--line);margin-top:28px;padding-top:24px}.staff-code-result{scroll-margin-top:100px}.staff-code-result label{margin-top:18px}.staff-code-result .actions{margin-top:20px}.staff-code-value{font-weight:800;letter-spacing:.12em;font-variant-numeric:tabular-nums}.staff-invite-list{list-style:none;padding:0}.staff-invite-list li{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;padding:20px 0;border-bottom:1px solid var(--line)}.staff-invite-list form{flex-basis:100%}.staff-invite-list small{display:block;margin-top:6px}.staff-code-history summary,[data-staff-legacy] summary{cursor:pointer;font-weight:800;padding:12px 0}
 
 @media(max-width:760px){[data-form="staff-code-create"] .form-grid{grid-template-columns:1fr}}
+.staff-shell main{max-width:1560px;padding:28px 32px 48px}
+.staff-shell .topbar{padding:14px 32px}
+.staff-navigation{padding:10px 32px;gap:24px}
+.staff-navigation a{min-height:44px;display:flex;align-items:center}
+.staff-shell .page-title{margin-bottom:20px}
+.staff-shell .page-title h1{font-size:30px;line-height:1.2}
+.staff-intake-shortcut{display:flex;align-items:center;flex-wrap:wrap;gap:12px 20px;margin-bottom:28px}
+.staff-intake-shortcut p{margin:0;font-size:13px}
+.staff-intake-shortcut .button{min-height:50px}
+.staff-cashier-layout{grid-template-columns:minmax(0,1fr) minmax(340px,420px);gap:28px}
+.staff-cashier-entry{min-width:0}
+.staff-intake{margin-top:0}
+.staff-queue>.section-heading{align-items:baseline;gap:8px 16px;flex-wrap:wrap;margin-bottom:16px}
+.staff-queue>.section-heading h2{margin:0;font-size:20px}
+.staff-queue-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.staff-queue-filters .button{min-height:46px;padding:9px 12px;gap:10px;font-size:14px;box-shadow:none}
+.staff-queue-filters [aria-pressed=true]{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
+.staff-queue-filters span{font-variant-numeric:tabular-nums;font-weight:800}
+.staff-order-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,390px),1fr));gap:18px;align-items:start}
+.staff-shell .staff-order-list .kitchen-order{margin:0;padding:22px;border:1px solid var(--line);min-width:0}
+.staff-shell .kitchen-order>.section-heading{align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.staff-shell .kitchen-order h3{font-size:22px;margin:0;line-height:1.3}
+.staff-shell .staff-order-code{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;margin:0}
+.staff-shell .kitchen-tasks{margin:16px 0 0}
+.staff-shell .kitchen-task{padding:16px 0 0;border:0;border-top:1px solid var(--line);border-radius:0;margin:0 0 16px;flex-direction:column;gap:10px}
+.staff-shell .kitchen-task strong{font-size:18px;line-height:1.4;display:block;margin-bottom:8px}
+.staff-shell .kitchen-task .actions{margin-top:4px;width:100%;max-width:none;gap:10px}
+.staff-shell .kitchen-task .actions:empty{display:none}
+.staff-shell .kitchen-task .actions .button,.staff-shell .kitchen-order>.actions .button{min-height:50px;font-size:15px}
+.staff-shell .kitchen-order [data-step=cancel]{font-size:13px;min-height:44px;background:transparent;color:var(--muted);box-shadow:none}
+.staff-shell .staff-item-note{background:var(--tint);padding:10px 12px;border-radius:8px;color:var(--ink)}
+.staff-shell .staff-order-total{margin:14px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:18px}
+.staff-shell .staff-queue-empty{grid-column:1/-1;margin:0;padding:28px}
+.staff-queue-empty h3{font-size:18px;margin-bottom:8px}
+.staff-queue-empty p{margin:0;color:var(--muted)}
+.staff-finance{margin-top:20px;padding:18px 22px}
+.staff-finance>summary{cursor:pointer;min-height:48px;line-height:1.5}
+.staff-finance>summary>strong{font-size:20px;display:block;margin:6px 0}
+.staff-finance-body{padding-top:20px}
+.staff-finance-body h2{font-size:18px}
+.staff-finance .finance-metrics{display:grid;grid-template-columns:1fr;gap:18px}
+.staff-finance .finance-metrics strong{font-size:24px}
+.staff-shell .kitchen-controller{margin-top:28px;max-width:760px}
+.staff-shell .kitchen-controller details{margin-bottom:16px}
+.staff-shell .kitchen-controller [data-action=kitchen-listen]{min-height:48px}
+.staff-shell .staff-intake textarea{min-height:120px}
+.staff-shell .staff-order-review>.actions{gap:10px}
+.staff-shell .staff-order-review>.actions .button{min-height:48px;flex:1 1 100%}
+.staff-shell .staff-order-review>.actions [data-action=staff-add-item],.staff-shell .staff-order-review>.actions [data-action=staff-remove-item]{flex:1 1 auto}
+.staff-shell .pay-method{min-height:52px}
+@media(max-width:1050px){.staff-cashier-layout{grid-template-columns:1fr}.staff-cashier-entry{width:100%}.staff-shell .staff-intake{margin-top:24px}.staff-order-list{grid-template-columns:repeat(auto-fill,minmax(min(100%,390px),1fr))}}
+@media(max-width:600px){.staff-shell main{padding:22px 16px 36px}.staff-shell .topbar{padding:12px 16px;gap:12px}.staff-shell .topbar-actions{gap:8px;display:flex;align-items:center;flex-wrap:wrap}.staff-shell .topbar-actions .button{padding:9px 11px;font-size:13px}.staff-navigation{padding:6px 16px;gap:22px}.staff-shell .page-title h1{font-size:26px}.staff-shell .page-title p{font-size:14px}.staff-intake-shortcut{gap:10px;margin-bottom:24px}.staff-intake-shortcut p{flex-basis:100%}.staff-queue-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}.staff-queue-filters .button{font-size:13px;justify-content:space-between}.staff-shell .staff-order-list .kitchen-order{padding:18px}.staff-shell .staff-intake,.staff-shell .staff-finance,.staff-shell .kitchen-controller{padding:20px}.staff-shell .staff-order-review>.actions{flex-direction:column}.staff-shell .staff-order-review>.actions .button{flex-basis:auto}.staff-shell .kitchen-order>.actions{gap:10px}.staff-order-list{grid-template-columns:1fr}}
+
+@media screen{.staff-shell .overlay-card{max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain}}.staff-shell .overlay-card .icon-button{min-height:48px;min-width:48px}

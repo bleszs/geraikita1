@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "kind": "gerai-kulakan-sales-hgb-v1",
+  "sourceManifest": "datasets/public/freshretailnet/processed/index.json",
+  "excludedHoldout": "models/benchmarks/freshretailnet-v2/latest.json",
+  "selectionSalt": "gerai-kulakan-sales-v1:2026-10-18",
+  "holdoutStores": 200,
+  "trainOrigins": [14, 76, 2],
+  "validationOrigins": [76, 90, 2],
+  "testOrigins": [90, 92, 94],
+  "variants": ["lags", "calendar"],
+  "leaves": [7, 15],
+  "residualWeights": [0.5, 1.0],
+  "fitting": {"loss":"absolute_error","learning_rate":0.05,"max_iter":160,"min_samples_leaf":40,"l2_regularization":2.0,"random_state":42,"early_stopping":false},
+  "limitations": "Observed normalized retail sales, not Indonesian ingredient consumption or unmet demand. Sales-only inputs. Test stores exclude development and the previously scored v2 stores, but calendar periods are reused: this is a new store holdout, not a new time-period or country. Previous UCI transfer failed and is not superseded by this benchmark. Business use additionally requires a recent local backtest beating naive and MA7; no-history accounts receive no fabricated forecast."
+}

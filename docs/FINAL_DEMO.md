@@ -1,3 +1,13 @@
+# Presentasi model kulakan yang benar-benar dilatih
+
+Buka aplikasi Railway, masuk sebagai pemilik dan pilih **Saran kulakan**. Buka **Model prediksi kulakan → Lihat hasil uji dan contoh prediksi nyata**, lalu salah satu tanggal prediksi. Tunjukkan prediksi model, rata-rata tujuh hari, aktual dan 14 tanggal masukan. Nilai berasal dari dataset publik dan inferensi bobot model di server; contoh tidak membuat transaksi akun.
+
+Pernyataan yang dapat dipakai: “Kami melatih model prediksi dua hari dari 500 seri penjualan ritel nyata dan 19.000 target. Pada 200 toko di luar pelatihan, MAE model 6,30% lebih kecil dari rata-rata tujuh hari. Saran bahan usaha memakai model setelah lolos backtest lokal.”
+
+WAPE 25,68% adalah galat agregat, jangan disebut akurasi 74,32%. Data adalah penjualan ternormalisasi dari dataset publik, belum bukti lapangan UMKM Indonesia. Akun baru tetap membutuhkan histori nyata; tidak ada prediksi bahan yang dibuat dari stok saja. Model memerlukan 14 tanggal konteks, sedangkan aturan aktivasi bahan memerlukan 42 tanggal untuk menilai 14 target lokal dua hari. Contoh publik dapat ditunjukkan tanpa menunggu histori akun terkumpul.
+
+Demonstrasi sintetis pada database terpisah yang dijelaskan di bagian lama tetap simulasi operasional. Historinya dikecualikan dari aktivasi kandidat model publik dan tidak boleh dipakai mengklaim performa lapangan. [Rincian model, reproduksi dan batas](KULAKAN_MODEL.md), [bukti cloud](evaluation/kulakan-cloud-release.json). Petunjuk demo sebelumnya berikut adalah riwayat.
+
 # Tambahan demo v0.42: masuk staf dengan kode
 
 Gunakan database demo terpisah di port **4180**. Masuk sebagai pemilik memakai [akun demo](DEMO_ACCOUNT.md), lalu buka Pengaturan akun > Akun kasir dan dapur. Pada akun kasir/dapur yang sudah ada, pilih **Buat kode masuk**, konfirmasi lalu bagikan kode/alamat ke jendela privat. Pilih Masuk sebagai staf, masukkan kode dan tunjukkan ruang kerja sesuai peran. Kode berlaku 15 menit untuk sekali masuk; akun email demo lama tetap bekerja. Tidak ada kode demo yang ditanam permanen. Membuat kode untuk akun yang ada menjaga daftar demo tanpa staf duplikat.

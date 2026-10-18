@@ -9,7 +9,8 @@ test.beforeAll(async () => {
   app = createApp({ filename: ':memory:', extractor: createExtractor({ provider: 'rules' }), transcriber: { status: async () => ({ available: false }) } });
   await new Promise(resolve => app.server.listen(0, '127.0.0.1', resolve)); base = 'http://127.0.0.1:' + app.server.address().port;
 });
-test.afterAll(async () => { await app?.close(); });
+test.afterEach(async ({page}) => { if(!page.isClosed())await page.goto('about:blank'); });
+test.afterAll(async () => { if(app){const closing=app.close();app.server.closeAllConnections();await closing;} });
 const date = () => addDays(dayAt(), -1);
 const panel = page => page.locator('.usage-review');
 async function setup(page) {
@@ -18,7 +19,7 @@ async function setup(page) {
   const saved = await page.request.post(base + '/api/ingredients', { data: { name: 'Tepung', unit: 'kg', min: 0, storageNote: '', catalogRevision: 1, csrf: owner.csrf } });
   const ingredient = await saved.json(); expect(saved.status()).toBe(201);
   for (let i = 0; i < 84; i++) app.store.run('INSERT INTO daily_usage VALUES(?,?,?,?,?)', owner.workspaceId, owner.business.id, ingredient.id, addDays(dayAt(), i - 84), units(i === 83 ? 60 : 10));
-  await page.goto(base + '/#restock');
+  await page.goto(base + '/#restock');await page.locator('.usage-review>summary').click();
   const skip = page.locator('.guide-welcome button').filter({ hasText: /^Lewati$/ }); if (await skip.count()) await skip.click();
   await expect(panel(page)).toContainText('1 tanggal perlu ditinjau');
   return { owner, ingredient, count: () => app.store.get('SELECT COUNT(*) AS n FROM usage_review_decisions WHERE workspace_id=? AND business_id=?', owner.workspaceId, owner.business.id).n };
@@ -46,6 +47,7 @@ test('owner saves a reviewed date with escaped note, reloads it and keeps the st
   await page.getByRole('button', { name: 'Simpan hasil pemeriksaan', exact: true }).click();
   await expect(page.locator('#usage-decision-form')).toHaveCount(0); expect(f.count()).toBe(1);
   await page.reload(); await expect(panel(page)).toContainText('1 tanggal sudah diperiksa');
+  await panel(page).locator(':scope>summary').click();
   await panel(page).locator('.usage-review-detail>summary').click();
   await expect(panel(page).locator('.usage-finding')).toContainText('Bukti cocok <img src=x onerror=alert(1)>');
   await expect(panel(page).locator('img')).toHaveCount(0); await expect(panel(page)).toContainText('1 tanggal perlu ditinjau');

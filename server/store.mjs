@@ -60,6 +60,9 @@ export function createStore(filename = 'data/gerai-kita-live.sqlite') {
     CREATE TABLE IF NOT EXISTS collective_orders(id TEXT PRIMARY KEY,workspace_id TEXT,cycle INTEGER,approved_version INTEGER NOT NULL,status TEXT NOT NULL,snapshot TEXT NOT NULL,created_at TEXT NOT NULL,cancelled_at TEXT,
       FOREIGN KEY(workspace_id,cycle) REFERENCES collective_cycles(workspace_id,cycle) ON DELETE CASCADE);
     CREATE UNIQUE INDEX IF NOT EXISTS collective_active ON collective_orders(workspace_id,cycle) WHERE status<>'cancelled';
+    CREATE TABLE IF NOT EXISTS withdrawals(id TEXT PRIMARY KEY,workspace_id TEXT,business_id TEXT,idem TEXT NOT NULL,amount INTEGER NOT NULL CHECK(amount>0),
+      destination_type TEXT NOT NULL,destination_detail TEXT NOT NULL,status TEXT NOT NULL,created_at TEXT NOT NULL,
+      UNIQUE(workspace_id,business_id,idem),FOREIGN KEY(workspace_id,business_id) REFERENCES businesses(workspace_id,id) ON DELETE CASCADE);
   `);
   const run = (sql, ...args) => db.prepare(sql).run(...args);
   const get = (sql, ...args) => db.prepare(sql).get(...args);
@@ -81,6 +84,9 @@ export function createStore(filename = 'data/gerai-kita-live.sqlite') {
     for(const [column,type] of [['name','TEXT'],['join_code','TEXT'],['owner_business_id','TEXT'],['settings','TEXT'],['quote_json','TEXT']])if(!all('PRAGMA table_info(workspaces)').some(c=>c.name===column))db.exec('ALTER TABLE workspaces ADD COLUMN '+column+' '+type);
     db.exec('CREATE UNIQUE INDEX IF NOT EXISTS workspace_invite ON workspaces(join_code) WHERE join_code IS NOT NULL');
     if (!all('PRAGMA table_info(sales)').some(c => c.name === 'usage_snapshot')) db.exec('ALTER TABLE sales ADD COLUMN usage_snapshot TEXT');
+    // Payment + 10% application fee on each sale. Columns are added without
+    // rewriting existing rows; net is read as net ?? (total - fee) for old sales.
+    for (const [column,type] of [['payment_method','TEXT'],['fee','INTEGER NOT NULL DEFAULT 0'],['net','INTEGER']]) if(!all('PRAGMA table_info(sales)').some(c=>c.name===column)) db.exec(`ALTER TABLE sales ADD COLUMN ${column} ${type}`);
     if (!all('PRAGMA table_info(demands)').some(c => c.name === 'stock_revision')) db.exec('ALTER TABLE demands ADD COLUMN stock_revision INTEGER NOT NULL DEFAULT 0');
     if (!all('PRAGMA table_info(workspaces)').some(c => c.name === 'active_cycle')) db.exec('ALTER TABLE workspaces ADD COLUMN active_cycle INTEGER NOT NULL DEFAULT 1');
     if (!all('PRAGMA table_info(transfers)').some(c => c.name === 'cycle')) db.exec('ALTER TABLE transfers ADD COLUMN cycle INTEGER NOT NULL DEFAULT 1');

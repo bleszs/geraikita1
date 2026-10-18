@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-18",
+  "baseCommit": "ff84f25",
+  "workingBranch": "voicetext",
+  "newCommitCreated": false,
+  "regression": {
+    "command": "npm test",
+    "backendPassed": 317,
+    "browserPassed": 70,
+    "failed": 0,
+    "exitCode": 0,
+    "log": "data/community-release-final.log"
+  },
+  "finalRegistrationAuditCopyCheck": {
+    "backendPassed": 5,
+    "browserPassed": 2,
+    "failed": 0,
+    "exitCode": 0,
+    "logs": ["data/community-last-node.log", "data/community-last-browser.log"]
+  },
+  "extraChecks": {
+    "orderVoicePythonTestsPassed": 2,
+    "realChromiumRecordingAndBaseInferencePassed": true,
+    "audioSource": "Previously inspected permitted public FLEURS recording, emulated microphone, not order-domain accuracy",
+    "membershipIntegrityChecksPassed": 6,
+    "layoutStatesWithoutHorizontalOverflow": 7,
+    "designCanonUnchanged": true,
+    "productionFixturesCreated": false
+  },
+  "scope": "Signup without group; create/join in Beli bersama; atomic retention of business records; safe same-unit ingredient identity alignment; readable invitation and kitchen command; Excel CSV; GK logo; existing peer payment behavior retained.",
+  "limitations": [
+    "Physical microphone and order-domain ASR accuracy remain unverified.",
+    "CSV contract and browser download verified; no claim of testing every Excel edition.",
+    "Leaving groups with collective history or cross-member transfers remains restricted.",
+    "Forecast model readiness needs real business history; public benchmark models are not silently activated."
+  ]
+}

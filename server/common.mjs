@@ -10,6 +10,11 @@ export function dayAt(time = Date.now()) {
 export function addDays(day, days) { const d = new Date(day + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10); }
 export const units = quantity => Math.round(quantity * 10000);
 export const quantity = value => value / 10000;
+// Demo cashiering: accepted payment methods and the 10% platform application fee
+// taken from each sale. The owner's balance accrues net = total - fee.
+export const PAYMENT_METHODS = ['tunai', 'qris', 'transfer', 'ewallet'];
+export const ADMIN_FEE_RATE = 0.1;
+export const applicationFee = gross => Math.round(gross * ADMIN_FEE_RATE);
 export function proportional(total, weights) {
   const sum = weights.reduce((s, w) => s + w, 0);
   if (!sum) return weights.map(() => 0);

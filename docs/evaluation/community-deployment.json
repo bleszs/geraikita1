@@ -1,0 +1,96 @@
+{
+  "checkedAt": "2026-10-18T03:04:32.095Z",
+  "deploymentId": "24f3d29a-61c4-4b87-adde-019a5eb6bba2",
+  "status": "SUCCESS",
+  "url": "https://web-production-a3e13.up.railway.app",
+  "source": {
+    "baseCommit": "ff84f25",
+    "workingBranch": "voicetext",
+    "includesUncommittedChanges": true,
+    "newCommitCreated": false,
+    "pushed": false
+  },
+  "publicFilesMatched": 12,
+  "publicGuestUi": {
+    "checkedAt": "2026-10-18T03:03:34.587Z",
+    "secureContext": true,
+    "guestWelcomeCount": 0,
+    "registrationGroupFields": 0,
+    "logo": "/assets/logo.svg",
+    "writesPerformed": false,
+    "passed": true
+  },
+  "health": {
+    "speechAvailable": true,
+    "speechModel": "whisper-base",
+    "speechProfile": "base-orders",
+    "aiAvailable": true,
+    "aiModel": "qwen2.5:1.5b"
+  },
+  "aiConnection": "Existing external endpoint; not independently hosted Railway Ollama",
+  "runtime": {
+    "speech": [
+      {
+        "role": "owner",
+        "httpStatus": 200,
+        "nonemptyTranscript": true,
+        "model": "whisper-base",
+        "durationSeconds": 8.58,
+        "elapsedMs": 1840,
+        "transcriptSha256": "9c5268cade5b72274f1eb6471f7c242e6bb3bd81e6db7f294d550b5849af941d"
+      },
+      {
+        "role": "cashier",
+        "httpStatus": 200,
+        "nonemptyTranscript": true,
+        "model": "whisper-base",
+        "durationSeconds": 8.58,
+        "elapsedMs": 1798,
+        "transcriptSha256": "9c5268cade5b72274f1eb6471f7c242e6bb3bd81e6db7f294d550b5849af941d"
+      }
+    ],
+    "extraction": {
+      "httpStatus": 200,
+      "mode": "ollama",
+      "realQwenInference": true,
+      "reviewRequired": true
+    },
+    "community": {
+      "standaloneSignup": true,
+      "joinAfterLogin": true,
+      "staffChangeForbidden": true,
+      "noInventedTransactions": true
+    },
+    "auth": {
+      "unauthenticatedSpeech": 401,
+      "foreignOrigin": 403
+    },
+    "productionDatabaseUnchangedDuringMemoryTests": true
+  },
+  "dataPreservation": {
+    "tablesCompared": 36,
+    "originalRowsEqual": true,
+    "addedTables": 1,
+    "integrity": "ok",
+    "foreignKeyErrors": 0,
+    "productionRestorePerformed": false,
+    "productionFixturesCreated": false
+  },
+  "forecast": {
+    "readOnly": true,
+    "summary": {
+      "ingredients": 4,
+      "withoutHistory": 4,
+      "insufficientCalendarSpan": 0,
+      "awaitingPermissionAndCompleteness": 0,
+      "activeRegistryModels": 0,
+      "recentWindowsWithAssumedZeros": 0
+    },
+    "baselineReady": 0
+  },
+  "limitations": [
+    "Speech uses known public audio and emulated microphone; physical devices and order-domain accuracy remain unverified.",
+    "Forecast business models need real history; public benchmarks are not activated for accounts.",
+    "Qwen availability depends on the existing external endpoint."
+  ]
+}

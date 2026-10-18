@@ -1,0 +1,7 @@
+# Cashier, kitchen and restock task clarity
+
+Mode: Operate. Preserve GK, cream/terracotta, Nunito, light/dark and all access controls. Cashier queue and order entry take precedence over finance; finance becomes an explicit expandable secondary summary. Add counted queue filters with textual states and preserve input and keyboard focus during live updates. Ready orders precede other cashier work; startable tasks precede other kitchen work. Use large labelled actions, consistent order identifiers, visible connection state and low-salience cancellation. Voice controls remain available, with concise instructions. Do not change payment/stock/scheduling rules.
+
+Restock begins with per-ingredient forecast for two days, available stock and suggested purchase, automatically taken from server predictions. Identify AI versus baseline; unknown remains unknown. Fold model education/provenance into a native disclosure; keep usage review summaries and details. No business seeding, weakening model gates or invented forecasts. Add a clearly named refresh action and preserve consent for shared purchasing.
+
+Inspect one batch of desktop and mobile light/dark: cashier ready/queued + review/payment, kitchen priority and active task, restock trained/baseline/unknown and evidence. One correction batch, at most one confirmation. All writable browser fixtures remain in memory databases. Keep canonical design files unchanged and do not commit or push.

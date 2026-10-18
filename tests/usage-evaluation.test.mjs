@@ -71,7 +71,7 @@ test('export is read-only, scoped, blind and retains every target date without z
   for (const row of draft().observations) if (row.date !== missing) f.insert(row.date, row.qty);
   f.insert(addDays(periods.testTo, 1), 99);
   const before = snapshot(f.filename), data = exportUsageAnnotations(f.options);
-  assert.deepEqual(snapshot(f.filename), before); assert.equal(before.length, 36);
+  assert.deepEqual(snapshot(f.filename), before); assert.equal(before.length, 37);
   assert.equal(data.observations.find(row => row.date === missing), undefined);
   assert.equal(data.observations.at(-1).date, periods.testTo);
   assert.equal(data.annotations.length, 8); assert.equal(data.annotations.find(row => row.date === missing).label, null);
