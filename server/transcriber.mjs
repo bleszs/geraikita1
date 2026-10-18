@@ -18,10 +18,10 @@ export function decodeAudioBody(body){
   return audio;
 }
 const messages={unreliable_speech:'Hasil ucapan berulang atau kurang jelas. Dekatkan mikrofon, ucapkan nama menu dan jumlah dengan jeda, lalu rekam ulang. Kamu juga bisa mengetik pesanan.',invalid_audio:'Rekaman tidak dapat dibaca. Rekam ulang atau ketik pesanan.',too_long:'Rekaman melebihi 30 detik. Rekam pesanan yang lebih singkat.',too_short:'Rekaman terlalu singkat. Ucapkan pesanan lalu hentikan rekaman.',no_speech:'Ucapan belum terdengar jelas. Dekatkan mikrofon lalu rekam ulang, atau ketik pesanan.',too_much_text:'Hasil suara terlalu panjang. Rekam pesanan yang lebih singkat.'};
-export function runSpeechProcess(audio,{check=false,signal,timeoutMs=90000,spawnProcess=spawn}={}){
+export function runSpeechProcess(audio,{check=false,signal,vocabulary='',timeoutMs=90000,spawnProcess=spawn}={}){
   return new Promise((resolve,reject)=>{
     const python=path.join(root,'.venv-voice',process.platform==='win32'?'Scripts/python.exe':'bin/python');
-    const child=spawnProcess(python,[path.join(root,'server/ml/transcribe.py'),...(check?['--check']:[])],{cwd:root,windowsHide:true,stdio:['pipe','pipe','pipe'],env:{...process.env,HF_HUB_OFFLINE:'1',PYTHONUTF8:'1'}});
+    const child=spawnProcess(python,[path.join(root,'server/ml/transcribe.py'),...(check?['--check']:[])],{cwd:root,windowsHide:true,stdio:['pipe','pipe','pipe'],env:{...process.env,HF_HUB_OFFLINE:'1',PYTHONUTF8:'1',GERAI_SPEECH_VOCABULARY:typeof vocabulary==='string'?vocabulary.slice(0,400):''}});
     let output='',size=0,settled=false;
     const finish=(err,result)=>{if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);err?reject(err):resolve(result);};
     const abort=()=>{child.kill();finish(new ApiError(499,'Pemrosesan suara dibatalkan.'));};
@@ -44,12 +44,12 @@ export function createTranscriber({runner=runSpeechProcess,verifyFiles,disabled=
     if(disabled)return {available:false,model:'whisper-tiny',reason:'Pencatatan suara dinonaktifkan pada server ini.'};
     return statusPromise??=(async()=>{try{await (verifyFiles||verify)();await runner(null,{check:true,timeoutMs:30000});return {available:true,model:'whisper-tiny',engine:'faster-whisper',compute:'cpu-int8',pretrained:true,language:'id',maxSeconds:30,maxBytes:MAX_AUDIO_BYTES,reason:'Ucapan diproses oleh layanan suara aplikasi. Rekaman tidak disimpan.'};}catch{return {available:false,model:'whisper-tiny',reason:'Model suara belum siap. Ketik pesanan; jalankan npm run voice:setup lalu muat ulang server.'};}})();
   }
-  return {status,async transcribe(body,{signal}={}){
+  return {status,async transcribe(body,{signal,vocabulary=''}={}){
     const audio=decodeAudioBody(body);
     requireValue(!busy,'Pemrosesan suara sedang dipakai. Tunggu sebentar lalu rekam ulang.',429);
     requireValue((await status()).available,'Model suara belum siap. Ketik pesanan atau periksa pemasangan suara.',503);
     requireValue(!busy,'Pemrosesan suara sedang dipakai. Tunggu sebentar lalu rekam ulang.',429);
-    busy=true;try{return await runner(audio,{signal});}finally{busy=false;}
+    busy=true;try{return await runner(audio,{signal,vocabulary});}finally{busy=false;}
   }};
 }
 export const localTranscriber=createTranscriber();

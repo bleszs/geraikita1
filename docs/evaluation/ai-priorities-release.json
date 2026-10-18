@@ -1,0 +1,51 @@
+{
+  "sourceHead": "ca3d310",
+  "localChangesUncommitted": true,
+  "automaticCommitOrPush": false,
+  "backend": {
+    "passed": 330,
+    "failed": 0
+  },
+  "pythonVocabulary": {
+    "passed": 2,
+    "failed": 0
+  },
+  "productionPlanBrowser": {
+    "passed": 1,
+    "failed": 0,
+    "database": ":memory:",
+    "widths": [
+      1440,
+      360
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ]
+  },
+  "regressionBrowser": {
+    "passed": 16,
+    "failed": 0,
+    "suites": [
+      "real-guide",
+      "real-hci-operations",
+      "real-voice"
+    ]
+  },
+  "voiceDomainAccuracyMeasured": false,
+  "qwenIndependentHostingResolved": false,
+  "newProductionHistoryCreated": false,
+  "forecastWeightsChanged": false,
+  "designCanonChanged": false,
+  "designScan": {
+    "newPanelPrimaryFindings": 0,
+    "retainedExistingFinding": "public/styles.css kitchen-order 4px status border",
+    "existingTokenAdvisoriesRetained": true
+  },
+  "pythonVoiceRegression": {
+    "passed": 9,
+    "failed": 0
+  },
+  "deploymentId": "efa8d121-792a-4fe1-a464-0d330a110f1e",
+  "cloudEvidence": "ai-priorities-cloud-release.json"
+}

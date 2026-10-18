@@ -1,3 +1,17 @@
+# Prioritas AI v57 aktif — 18 Oktober 2026
+
+Deployment **`efa8d121-792a-4fe1-a464-0d330a110f1e` SUCCESS** di https://web-production-a3e13.up.railway.app. Source upload folder kerja setelah HEAD `ca3d310`, tanpa commit/push otomatis.
+
+- Saran kulakan memiliki hitung target porsi untuk usaha baru memakai resep dan stok nyata. Ini perhitungan rencana produksi, bukan prediksi AI, dan tidak mencatat penjualan.
+- Voice memakai bantuan nama/alias menu usaha pada Whisper Base `base-orders`. Inferensi klip publik 8,58 detik berhasil di cloud; belum ada klaim peningkatan akurasi pesanan nyata.
+- Qwen 1.5B berhasil menghasilkan mode ollama di cloud. Saat koneksi gagal, parser sementara dipakai 30 detik sebelum mencoba kembali. Hosting Qwen mandiri belum terselesaikan; endpoint eksternal masih diperlukan.
+- Bobot prediksi tidak berubah: checksum cocok dan tiga inferensi sesuai Python. Akun kosong serta perhitungan target produksi diperiksa pada database memori, tanpa membuka database produksi atau menambah fixture produksi.
+- Enam berkas publik dan modul staf API cocok dengan lokal. Backend 330/330, Python kosakata 2/2, Python penjagaan voice 9/9 serta browser 17/17 lulus.
+
+[Bukti cloud](evaluation/ai-priorities-cloud-release.json) · [Cara kerja dan sisa prioritas](AI_PRIORITIES.md). Riwayat sebelumnya di bawah.
+
+Backup sebelum/sesudah valid pada 37 tabel, integrity/FK dan restore terisolasi lulus. Penjualan lama tetap sama dan stok cocok ledger. Dua tabel sesi masing-masing kehilangan satu sesi selama interval; seluruh database tidak diklaim identik. Tidak ada restore produksi. [Bukti](evaluation/ai-priorities-data-preservation.json).
+
 # Tampilan HCI operasional aktif — 18 Oktober 2026
 
 Deployment **`f7fcf807-370b-4b0e-b678-434224e26f03` SUCCESS**, URL https://web-production-a3e13.up.railway.app. Sumber diunggah dari folder kerja branch `voicetext`, HEAD `ff84f25`; tidak dibuat commit, staging atau push.

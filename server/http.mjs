@@ -13,6 +13,8 @@ import {createPlans} from './plans.mjs';
 import {localTranscriber,MAX_AUDIO_BODY} from './transcriber.mjs';
 import { ApiError, requireValue } from './common.mjs';
 import {loadKulakanModel} from './ml/kulakan-model.mjs';
+import {productionPlan} from './production-plan.mjs';
+import {speechVocabulary} from './speech-vocabulary.mjs';
 const root = path.resolve(fileURLToPath(new URL('../public/', import.meta.url)));
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2', '.json': 'application/json; charset=utf-8' };
 async function readBody(request, limit=65536) {
@@ -159,13 +161,14 @@ export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-
         const kitchenMatch=pathname.match(/^\/api\/kitchen\/orders\/([a-zA-Z0-9-]+)\/actions$/);
         if(kitchenMatch&&mutating)return json(service.kitchen.change(session,kitchenMatch[1],body));
         if (pathname === '/api/bootstrap' && request.method === 'GET') return json(await stateOf(session));
+        if(pathname==='/api/production-plan'&&mutating)return json(productionPlan(store,session,body,service.available));
         if (pathname === '/api/usage-reviews' && mutating) return json(service.saveUsageReview(session,body),201);
         if(pathname==='/api/transcriptions' && mutating){
           const reservation=plans.reserve(session,'speech');let succeeded=false;
           const controller=new AbortController();
           const disconnected=()=>{if(!response.writableEnded)controller.abort();};
           response.once('close',disconnected);
-          try{const result=await transcriber.transcribe(body,{signal:controller.signal});const active=identity.resolve(cookie);requireValue(active&&active.account_id===session.account_id&&active.role_revision===session.role_revision,'Sesi berubah. Masuk kembali.',401);succeeded=true;return json(result);}
+          try{const vocabulary=speechVocabulary(store.menus(session));const result=await transcriber.transcribe(body,{signal:controller.signal,vocabulary});const active=identity.resolve(cookie);requireValue(active&&active.account_id===session.account_id&&active.role_revision===session.role_revision,'Sesi berubah. Masuk kembali.',401);succeeded=true;return json(result);}
           finally{plans.finish(reservation,succeeded);response.removeListener('close',disconnected);}
         }
         if(pathname==='/api/account/plan'&&request.method==='GET')return json(plans.snapshot(session));

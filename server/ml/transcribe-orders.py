@@ -32,6 +32,10 @@ def load_model():
 # itself: the text is still reviewed by the user and gated by the catalog parser.
 ORDER_PROMPT = 'Pesanan makanan dan minuman dalam Bahasa Indonesia, menyebut nama menu dan jumlah porsi.'
 
+def vocabulary_hint():
+    # A bounded vocabulary biases recognition only; silence/loop and evidence gates remain.
+    return re.sub(r"[^\w ,'-]", ' ', os.environ.get('GERAI_SPEECH_VOCABULARY', '')[:400], flags=re.UNICODE).strip()
+
 
 def transcribe(data, model=None):
     # Reuse strict container, duration, mono/resampling and silence bounds.
@@ -40,7 +44,7 @@ def transcribe(data, model=None):
     # beam_size 5 + a temperature ladder let faster-whisper retry a weak decode
     # instead of giving up; the hallucination guards below stay strict.
     segments, _ = (model or load_model()).transcribe(audio, language='id', task='transcribe', beam_size=5,
-        temperature=[0.0, 0.2, 0.4, 0.6, 0.8], initial_prompt=ORDER_PROMPT,
+        temperature=[0.0, 0.2, 0.4, 0.6, 0.8], initial_prompt=ORDER_PROMPT, hotwords=vocabulary_hint() or None,
         condition_on_previous_text=False, vad_filter=True, vad_parameters={'min_silence_duration_ms': 400},
         no_speech_threshold=0.7, log_prob_threshold=-1.2, compression_ratio_threshold=2.4)
     accepted = []

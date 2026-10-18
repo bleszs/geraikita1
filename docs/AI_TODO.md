@@ -1,3 +1,15 @@
+# Prioritas AI v57 — 18 Oktober 2026
+
+- [x] Hitung belanja usaha baru dari target porsi, resep dan stok tersedia; hasil dibatalkan ketika target/data berubah. Ini rencana produksi, bukan prediksi AI.
+- [x] Bantu Whisper Base dengan nama/alias menu milik usaha yang masuk; batasi kosakata, pertahankan penolakan pengulangan dan pemeriksaan manusia.
+- [x] Pemulihan koneksi Qwen: parser sementara 30 detik setelah gagal, lalu coba model lagi. Uji langsung lokal berhasil mode ollama.
+- [x] 330 tes backend, dua tes kosakata Python, sembilan penjagaan voice Python serta 17 alur browser lulus. Tanpa histori produksi buatan.
+- [x] Railway efa8d121 SUCCESS: inferensi Whisper Base dan Qwen ollama nyata, model prediksi tetap tersedia serta enam file publik cocok. [Bukti](evaluation/ai-priorities-cloud-release.json).
+- [ ] Ukur akurasi voice pesanan nyata dan evaluasi model dengan histori UMKM Indonesia yang sah.
+- [ ] Qwen 1.5B mandiri di cloud; kapasitas Railway sebelumnya belum mencukupi. Cooldown tidak menggantikan hosting.
+
+[Cara kerja, verifikasi dan batas](AI_PRIORITIES.md). Riwayat sebelumnya di bawah.
+
 # HCI kasir/dapur dan prediksi langsung — 18 Oktober 2026
 
 - [x] Utamakan antrean dan input kasir; rincian saldo dilipat, seluruh metode pembayaran dipertahankan.
@@ -19,7 +31,8 @@
 - [x] Sediakan contoh publik yang bisa ditelusuri di Saran kulakan, terpisah dari stok dan transaksi akun.
 - [x] 325 tes backend lulus; tur dan model browser dikonfirmasi setelah koreksi penunjuk. Railway 8b9e4ac2 SUCCESS, bobot dan lima file publik cocok, inferensi cloud serta akun kosong memori terverifikasi. [Bukti](evaluation/kulakan-cloud-release.json).
 - [ ] Kumpulkan histori UMKM Indonesia yang sah untuk evaluasi maju dan pembuktian manfaat usaha.
-- [ ] Lengkapi pencatatan hari tutup/nol dan perencanaan kebutuhan awal dari target produksi; ini tidak diselesaikan oleh model publik.
+- [x] Perencanaan kebutuhan awal dari target porsi dan resep nyata, tanpa mengisi histori buatan.
+- [ ] Lengkapi pencatatan hari tutup/nol dan impor histori nyata; ini tidak diselesaikan oleh model publik.
 
 [Model, hasil, cara presentasi dan batas](KULAKAN_MODEL.md). Catatan di bawah adalah riwayat.
 

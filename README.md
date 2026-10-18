@@ -1,3 +1,9 @@
+# Prioritas AI: kulakan, voice dan pemulihan Qwen
+
+Usaha baru bisa membuka **Saran kulakan → Hitung dari target porsi** untuk menghitung kebutuhan belanja dari resep dan stok tanpa mengisi histori buatan. Prediksi AI tetap mengikuti kecukupan histori dan evaluasi model. Voice mendapat bantuan nama menu usaha; Qwen mencoba kembali otomatis setelah gangguan koneksi.
+
+Aktif di [Railway](https://web-production-a3e13.up.railway.app). [Cara kerja, verifikasi dan batas](docs/AI_PRIORITIES.md), [status deployment](docs/RAILWAY_MAIN_STATUS.md). Tanpa commit/push otomatis. Riwayat versi di bawah.
+
 # Tampilan operasional dan saran kulakan
 
 Kasir dan dapur kini mempunyai filter status berjumlah, tindakan utama yang lebih jelas dan tampilan ponsel yang ringkas. Saldo kasir tersedia dalam rincian. Saran kulakan langsung menampilkan prediksi pemakaian dua hari, stok tersedia dan saran jumlah beli; sumber model serta pemeriksaan pemakaian dibuka saat diperlukan. [Alur dan penerapan HCI](docs/HCI_OPERATIONS.md).

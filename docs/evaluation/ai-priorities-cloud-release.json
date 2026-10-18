@@ -1,0 +1,75 @@
+{
+  "checkedAt": "2026-10-18T04:55:32.953Z",
+  "runId": "2026-10-18T03-35-01Z-18239ce0",
+  "artifactSha256": "5074b442bcb22560e7dc197e079ad5cd7e6a57ffbdd909ab2925fdf41d10226c",
+  "pythonParityRows": 3,
+  "emptyBusinessPreserved": true,
+  "database": ":memory:",
+  "productionDatabaseOpened": false,
+  "productionFixturesCreated": false,
+  "passed": true,
+  "deploymentId": "efa8d121-792a-4fe1-a464-0d330a110f1e",
+  "runtime": {
+    "runtime": true,
+    "publicAudio": true,
+    "domainAccuracyBenchmark": false,
+    "voice": {
+      "model": "whisper-base",
+      "profile": "base-orders",
+      "durationSeconds": 8.58,
+      "catalogHintPipeline": true
+    },
+    "qwen": {
+      "mode": "ollama",
+      "model": "qwen2.5:1.5b"
+    }
+  },
+  "productionPlan": {
+    "productionPlan": true,
+    "database": ":memory:",
+    "required": 2.5,
+    "buy": 2.5,
+    "businessTablesUnchanged": true,
+    "productionDatabaseOpened": false
+  },
+  "url": "https://web-production-a3e13.up.railway.app",
+  "publicFiles": [
+    {
+      "file": "public/app.js",
+      "matchesLocal": true
+    },
+    {
+      "file": "public/live-views.js",
+      "matchesLocal": true
+    },
+    {
+      "file": "public/styles.css",
+      "matchesLocal": true
+    },
+    {
+      "file": "public/guide-content.js",
+      "matchesLocal": true
+    },
+    {
+      "file": "public/sw.js",
+      "matchesLocal": true
+    },
+    {
+      "file": "public/production-plan-view.js",
+      "matchesLocal": true
+    }
+  ],
+  "staffClientMatchesLocal": true,
+  "health": {
+    "forecast": {
+      "available": true,
+      "kind": "gerai-kulakan-sales-hgb-v1",
+      "runId": "2026-10-18T03-35-01Z-18239ce0",
+      "publicBenchmarkQualified": true
+    },
+    "qwenAvailable": true,
+    "qwenModel": "qwen2.5:1.5b",
+    "speechAvailable": true,
+    "speechModel": "whisper-base"
+  }
+}

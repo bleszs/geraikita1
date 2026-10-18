@@ -1,0 +1,42 @@
+{
+  "checkedAt": "2026-10-18T04:49:52.976Z",
+  "accuracyBenchmark": false,
+  "productionDataOpened": false,
+  "speechStatus": {
+    "available": true,
+    "model": "whisper-base",
+    "engine": "faster-whisper",
+    "compute": "cpu-int8",
+    "pretrained": true,
+    "language": "id",
+    "maxSeconds": 30,
+    "maxBytes": 1048576,
+    "reason": "Ucapan diproses oleh layanan suara aplikasi. Rekaman tidak disimpan.",
+    "profile": "base-orders",
+    "openblasThreads": "1"
+  },
+  "speech": {
+    "model": "whisper-base",
+    "profile": "base-orders",
+    "durationSeconds": 8.58,
+    "elapsedMs": 1938,
+    "catalogHintPipeline": true,
+    "publicClip": true,
+    "domainAccuracyMeasured": false
+  },
+  "qwenStatus": {
+    "provider": "ollama",
+    "model": "qwen2.5:1.5b",
+    "available": true
+  },
+  "qwen": {
+    "mode": "ollama",
+    "items": [
+      {
+        "id": "nasi",
+        "qty": 2,
+        "note": ""
+      }
+    ]
+  }
+}

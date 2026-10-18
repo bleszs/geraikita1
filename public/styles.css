@@ -4797,3 +4797,12 @@ form .notice {
 .usage-panel-body{padding-top:20px}
 .usage-review:not([open]){padding-top:18px;padding-bottom:18px}
 @media(max-width:600px){.usage-panel-summary h2{display:block;margin:0 0 8px;font-size:18px}.usage-panel-summary>span{display:inline-block;margin-top:8px}}
+.production-planner>summary{cursor:pointer;font-weight:800;min-height:44px}
+.production-planner-body{padding-top:16px}
+.production-targets{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.production-targets label{margin:0;overflow-wrap:anywhere}
+.production-result{margin-top:24px;border-top:1px solid var(--line);padding-top:20px}
+.production-result ul{list-style:none;padding:0}
+.production-result li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) auto;gap:12px;padding:14px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.production-result li>b{color:var(--accent-ink)}
+@media(max-width:600px){.production-targets{grid-template-columns:1fr}.production-result li{grid-template-columns:1fr}.production-planner button[type=submit]{width:100%}}

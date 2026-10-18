@@ -1,0 +1,3 @@
+# Production targets without fabricated history
+
+Mode: Operate. Preserve incumbent cream/terracotta/Nunito and the concise forecast-first page. Add one closed disclosure for real user-entered menu portions; calculate recipe quantities and stock shortages server-side. Explicitly identify a recipe calculation rather than an AI prediction. No history, sale, reservation or purchase is written. Clear stale preview after bootstrap, preserve entered targets. Verify keyboard disclosure, scoped validation, narrow dark screen and actual preview numbers using memory fixtures. No new model claims, no canonical redesign and no commits.

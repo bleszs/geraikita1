@@ -1,0 +1,31 @@
+{
+  "tablesBefore": 37,
+  "tablesAfter": 37,
+  "schemaTableNamesUnchanged": true,
+  "allOriginalRowsUnchanged": false,
+  "changes": [
+    {
+      "table": "account_sessions",
+      "beforeRows": 5,
+      "afterRows": 4,
+      "oldRowsAbsentOrChanged": 1,
+      "newOrChangedRows": 0
+    },
+    {
+      "table": "sessions",
+      "beforeRows": 5,
+      "afterRows": 4,
+      "oldRowsAbsentOrChanged": 1,
+      "newOrChangedRows": 0
+    }
+  ],
+  "oldSalesRetained": true,
+  "oldSalesRowsUnchanged": true,
+  "inventoryMatchesMovementLedger": true,
+  "integrity": "ok",
+  "foreignKeys": "ok",
+  "restoreIsolatedRowsEqual": true,
+  "productionRestorePerformed": false,
+  "productionFixturesCreated": false,
+  "deploymentId": "efa8d121-792a-4fe1-a464-0d330a110f1e"
+}

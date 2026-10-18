@@ -95,12 +95,14 @@ export async function requestModelItems(text, menu, { model = process.env.OLLAMA
       new Set(parsed.items.map(i => i.id)).size !== parsed.items.length) throw new Error('evidence mismatch');
   return { items: parsed.items.map(i => ({ id: references.get(i.id), qty: i.qty })), model, latencyMs: Math.round(performance.now() - start) };
 }
-export function createExtractor({ provider = process.env.AI_PROVIDER || 'ollama', model = process.env.OLLAMA_MODEL || 'qwen2.5:1.5b', url = process.env.OLLAMA_URL || 'http://127.0.0.1:11434', timeout = 45000, fetcher = fetch, auth = process.env.OLLAMA_AUTH } = {}) {
+export function createExtractor({ provider = process.env.AI_PROVIDER || 'ollama', model = process.env.OLLAMA_MODEL || 'qwen2.5:1.5b', url = process.env.OLLAMA_URL || 'http://127.0.0.1:11434', timeout = 45000, fetcher = fetch, auth = process.env.OLLAMA_AUTH, now=Date.now, cooldownMs=30000 } = {}) {
   let busy = false;
   let cachedStatus;
   let checked = 0;
+  let retryAt=0;
   async function status() {
     if (provider === 'rules') return { provider: 'rules', available: false, model: null };
+    if(now()<retryAt)return {provider,model,available:false,retryAfterSeconds:Math.ceil((retryAt-now())/1000),reason:'Koneksi AI sedang dipulihkan; parser lokal tersedia.'};
     if (Date.now() - checked < 10000) return cachedStatus;
     try {
       const response = await fetcher(url + '/api/tags', { signal: AbortSignal.timeout(2000), headers: authHeader(auth) });
@@ -112,6 +114,7 @@ export function createExtractor({ provider = process.env.AI_PROVIDER || 'ollama'
   async function extract(text, menu = []) {
     const expected = parseOrder(text, menu); // deterministic evidence gate, never writes inventory
     if (provider === 'rules') return { items: expected, mode: 'rules', reason: 'Parser lokal; hasil tetap perlu diperiksa.' };
+    if(now()<retryAt)return {items:expected,mode:'fallback',model,reason:'Koneksi AI sedang dipulihkan. Parser lokal dipakai; periksa jumlah dan variasi.',retryAfterSeconds:Math.ceil((retryAt-now())/1000)};
     requireValue(!busy, 'AI sedang mengerjakan pesanan lain. Coba lagi atau isi secara manual.', 429);
     busy = true; const start = performance.now();
     try {
@@ -119,8 +122,10 @@ export function createExtractor({ provider = process.env.AI_PROVIDER || 'ollama'
       const canonical = list => list.map(i => `${i.id}:${i.qty}`).sort().join('|');
       const mapped = candidate.items;
       if (canonical(mapped) !== canonical(expected)) throw new Error('evidence mismatch');
+      retryAt=0;
       return { items: expected.map(i => ({ ...i, qty: mapped.find(p => p.id === i.id).qty })), mode: 'ollama', model, latencyMs: Math.round(performance.now() - start), reason: 'AI lokal; jumlah lolos pemeriksaan katalog dan bukti chat. Periksa variasi dari pesan asli.' };
     } catch (error) {
+      if(error.message!=='evidence mismatch'){retryAt=now()+cooldownMs;checked=0;cachedStatus=undefined;}
       return { items: expected, mode: 'fallback', model, latencyMs: Math.round(performance.now() - start), reason: error.message === 'evidence mismatch' ? 'Hasil AI berbeda dari bukti chat. Parser lokal dipakai; periksa jumlah dan variasi.' : 'AI lokal belum merespons. Parser lokal dipakai; kamu tetap bisa mengoreksi hasil.' };
     } finally { busy = false; }
   }

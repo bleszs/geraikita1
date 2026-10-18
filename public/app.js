@@ -50,10 +50,10 @@ function done(a,data){
 let staffCodeTimer;
 function clearStaffCode(){clearTimeout(staffCodeTimer);ui.staffCodeResult=null;}
 function clearStaffPairing(){clearStaffCode();ui.staffInviteEpoch=(ui.staffInviteEpoch||0)+1;ui.staffInvitePending=null;ui.staffInviteTarget=null;ui.staffInviteRevoke=null;}
-function clearDisplaySecrets(){ui.recoveryCodesResult=null;ui.kitchenExtraction=null;ui.staffReview=null;ui.staffReviewRevision=null;ui.staffReviewReason=null;ui.staffAccessEpoch=(ui.staffAccessEpoch||0)+1;ui.staffAccessResult=null;ui.staffAccessPending=null;ui.staffDelete=null;ui.staffFormOpen=false;clearStaffPairing();ui.staffQueueFilter='all';ui.staffFinanceOpen=false;ui.usagePanelOpen=false;ui.kulakanModelOpen=false;ui.staffPayOrigin=null;ui.staffRestoreFocus=null;ui.staffCreateKey=null;ui.staffCreateMeta=null;ui.staffEdit=null;ui.staffFocus=null;ui.displayEpoch=(ui.displayEpoch||0)+1;ui.displayLink=null;ui.displayCreatePending=null;ui.displayRevoke=null;ui.displayFocus=null;}
+function clearDisplaySecrets(){ui.recoveryCodesResult=null;ui.kitchenExtraction=null;ui.staffReview=null;ui.staffReviewRevision=null;ui.staffReviewReason=null;ui.staffAccessEpoch=(ui.staffAccessEpoch||0)+1;ui.staffAccessResult=null;ui.staffAccessPending=null;ui.staffDelete=null;ui.staffFormOpen=false;clearStaffPairing();ui.staffQueueFilter='all';ui.staffFinanceOpen=false;ui.productionPlan=null;ui.productionPlannerOpen=false;ui.usagePanelOpen=false;ui.kulakanModelOpen=false;ui.staffPayOrigin=null;ui.staffRestoreFocus=null;ui.staffCreateKey=null;ui.staffCreateMeta=null;ui.staffEdit=null;ui.staffFocus=null;ui.displayEpoch=(ui.displayEpoch||0)+1;ui.displayLink=null;ui.displayCreatePending=null;ui.displayRevoke=null;ui.displayFocus=null;}
 async function adopt(data){
   if(!state)clearDisplaySecrets();
-  const before=state&&scopeOf(state);state=data;connected=true;snapshotAt=new Date().toISOString();
+  const before=state&&scopeOf(state);ui.productionPlan=null;state=data;connected=true;snapshotAt=new Date().toISOString();
   if(before&&before!==scopeOf(data)){clearDisplaySecrets();clearVoice();values={};ui.editor=null;ui.review=null;ui.cancel=null;ui.reviewId=null;ui.usageReview=null;ui.pay=null;ui.receipt=null;}
   try{if(isStaff())await clearSnapshot();else await saveSnapshot(data);}catch(err){notify(err.message);}
   pendingAction=null;
@@ -151,6 +151,7 @@ document.addEventListener('input',event=>{
   if(event.target.id==='voice-text'){voice.edit(event.target.value);ui.voice=voice.state;return;}
   if(event.target.dataset.staffReview){const item=ui.staffReview?.[Number(event.target.dataset.index)];if(item)item[event.target.dataset.staffReview]=event.target.dataset.staffReview==='qty'?Number(event.target.value):event.target.value;syncStaffMenuAvailability(state);return;}
   const f=event.target.closest('[data-form]')||event.target.form;if(f?.dataset.form&&event.target.name){const name=f.dataset.form;if(name==='kitchen-station')values['station:'+f.elements.station.value]=Object.fromEntries(new FormData(f));else{values[name]??={};if(event.target.type!=='password'&&!event.target.closest('.password-input-wrap')&&event.target.name!=='code')values[name][event.target.name]=event.target.type==='checkbox'?event.target.checked:event.target.value;}
+    if(name==='production-plan'){ui.productionPlan=null;document.querySelector('.production-result')?.remove();}
     if(name==='kitchen-new')syncStaffMenuAvailability(state);
     if(name==='receipt'&&['productId','inputUnit'].includes(event.target.name)){values.receipt.qty='';values.receipt.unitPrice='';if(event.target.name==='productId')values.receipt.inputUnit='';render();}else if(name==='receipt')receiptPreview();
   }
@@ -271,6 +272,7 @@ document.addEventListener('submit',async event=>{
     else if(kind==='receipt'){const p=state.catalog.find(c=>c.id===b.productId);receiptMeasurement(p.unit,b.inputUnit,Number(b.qty),Number(b.unitPrice));await durable('receipt','/stock-receipts',{productId:b.productId,inputUnit:b.inputUnit,qty:Number(b.qty),unitPrice:Number(b.unitPrice),supplier:b.supplier,idempotencyKey:crypto.randomUUID()},`Penerimaan ${b.qty} ${b.inputUnit} ${p.name} pada ${m(Number(b.unitPrice))} per ${b.inputUnit}.`);}
     else if(kind==='extract'){const result=await request('/extractions',{text:b.text},state.csrf);ui.review=result.items;ui.reviewRevision=result.catalogRevision;ui.reviewId=null;ui.extractionReason=result.reason;}
     else if(kind==='quote'){payload={...b,unitPrice:Number(b.unitPrice),shipping:Number(b.shipping),minimum:Number(b.minimum),expiresAt:new Date(b.expiresAt).toISOString(),individualPrice:b.individualPrice===''?null:Number(b.individualPrice),individualShipping:b.individualShipping===''?null:Number(b.individualShipping)};await request('/community/quote',payload,state.csrf);await refresh();values.quote={};notify('Penawaran pemasok tersimpan dari rincian yang kamu masukkan.');}
+    else if(kind==='production-plan'){ui.productionPlannerOpen=true;ui.productionPlan=null;const items=state.menu.map(m=>({id:m.id,qty:Number(b['target-'+m.id]||0)})).filter(i=>i.qty!==0);ui.productionPlan=await request('/production-plan',{items,catalogRevision:state.catalogRevision},state.csrf);}
     else if(kind==='demand'){await request('/demand-consents',{qty:Number(b.qty),active:true,budget:b.budget===''?null:Number(b.budget)},state.csrf);await refresh();location.hash='kelompok';}
     else if(kind==='collective-receipt')await durable('collectiveReceipt',`/collective-orders/${state.group.purchase.id}/receipts`,{qty:Number(b.qty),idempotencyKey:crypto.randomUUID()},`Penerimaan ${b.qty} ${state.sharedProduct.unit} dari rencana kulakan.`);
     else if(kind==='offer')await durable('offer','/offers',{productId:state.sharedProduct.id,qty:Number(b.qty),unitPrice:Number(b.unitPrice),condition:b.condition,expiresInHours:Number(b.expiresInHours),cycle:state.group.cycle.id,idempotencyKey:crypto.randomUUID()},`Penawaran surplus ${b.qty} ${state.sharedProduct.unit}: ${b.condition}.`);
@@ -523,7 +525,7 @@ initialize();
 
 document.addEventListener('toggle',event=>{
   const el=event.target;if(!el.isConnected)return;
-  for(const [selector,key] of [['details.staff-finance','staffFinanceOpen'],['details.usage-review','usagePanelOpen'],['details.kulakan-model','kulakanModelOpen']])if(el.matches(selector))ui[key]=el.open;
+  for(const [selector,key] of [['details.production-planner','productionPlannerOpen'],['details.staff-finance','staffFinanceOpen'],['details.usage-review','usagePanelOpen'],['details.kulakan-model','kulakanModelOpen']])if(el.matches(selector))ui[key]=el.open;
 },true);
 document.addEventListener('keydown',event=>{
   const modal=document.querySelector('.staff-shell .overlay[role="dialog"]');if(!modal)return;
