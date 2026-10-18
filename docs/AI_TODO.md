@@ -1,3 +1,14 @@
+# Pembaruan main dan Railway — 18 Oktober 2026
+
+- [x] Audit semua head branch `origin`; seluruhnya tercakup di `29565e6`. Main di-fast-forward dan di-push tanpa commit baru; penghapusan Surplus dipertahankan.
+- [x] Deploy main ke Railway dan cocokkan hash empat modul frontend. HTTPS, pembatasan akses tamu, prasyarat browser voice dan backup/restore terpisah diperiksa. Migrasi cloud 30 → 36 tabel berhasil; cloud awal masih kosong, tanpa fixture produksi.
+- [x] Voice cloud memakai Whisper Tiny asli, diuji melalui API pemilik/kasir pada SQLite memori. Qwen 1.5B/Ollama lokal aktif dan delapan pemeriksaan model asli lulus.
+- [ ] Qwen/Ollama cloud: akun masih Trial, RAM 1 GB/volume 500 MB dan belum ada metode pembayaran. Pengguna belum bisa mengaktifkan paket berbayar. Tetap gunakan model 1.5B yang dipilih; cloud menampilkan fallback parser secara jujur.
+- [ ] Autodeploy GitHub: Railway menolak akses repo; upload CLI berhasil, tetapi Railway GitHub App perlu diberi akses sebelum autodeploy dapat dihubungkan.
+- [ ] Uji akun cloud dan izin mikrofon pada perangkat fisik; akun lokal/demo tidak otomatis dimigrasikan.
+
+[Status dan bukti terbaru](RAILWAY_MAIN_STATUS.md). Dokumen pembaruan ini belum di-commit. Catatan versi berikut adalah riwayat.
+
 # Lanjutan v0.50 — sinkronisasi staf dan jalur kasir
 
 - [x] Ambil `origin/rahasiagelap3.0` (`08ca38d`) dan gabungkan dengan pekerjaan AI/paket/jumlah lokal `8a58807`. Cadangan sebelum merge: `backup/pre-rahasiagelap3-8a58807`; `origin/main` masih `625f40f` saat pengambilan.

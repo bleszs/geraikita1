@@ -94,7 +94,9 @@
     "test:pairing": "node --test tests/staff-invites.test.mjs",
     "verify:ai-runtime": "node scripts/verify-ai-runtime.mjs",
     "backup:railway": "node scripts/railway-backup.mjs",
-    "test:railway-backup": "node --test tests/railway-backup.test.mjs"
+    "test:railway-backup": "node --test tests/railway-backup.test.mjs",
+    "gateway": "node scripts/ollama-gateway.mjs",
+    "gateway:secret": "node -e \"console.log(require('crypto').randomBytes(24).toString('base64url'))\""
   },
   "devDependencies": {
     "@fontsource/nunito-sans": "^5.3.0",

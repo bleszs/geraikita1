@@ -8,7 +8,7 @@ import {createTranscriber,runSpeechProcess} from './transcriber.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 export const speechProfiles=Object.freeze(Object.fromEntries([
-  ['tiny-current','tiny',null],['tiny-pinned','tiny','1'],['base-pinned','base','1']
+  ['tiny-current','tiny',null],['tiny-pinned','tiny','1'],['base-pinned','base','1'],['base-orders','base','1']
 ].map(([id,model,openblasThreads])=>[id,Object.freeze({id,model,openblasThreads})])));
 export function speechProfile(id){
   if(!Object.hasOwn(speechProfiles,id))throw new Error('Profil suara tidak didukung.');
@@ -19,7 +19,7 @@ export function profileRunner(id,{spawnProcess=spawn}={}){
   return async(audio,options={})=>{
     const result=await runSpeechProcess(audio,{...options,spawnProcess(exe,args,settings){
       const env={...settings.env,...(profile.openblasThreads?{OPENBLAS_NUM_THREADS:profile.openblasThreads}:{})};
-      return spawnProcess(exe,[path.join(root,'server/ml/transcribe-profile.py'),id,...args.slice(1)],{...settings,env});
+      return spawnProcess(exe,[path.join(root,id==='base-orders'?'server/ml/transcribe-orders.py':'server/ml/transcribe-profile.py'),id,...args.slice(1)],{...settings,env});
     }});
     if(result.profile!==id||result.model!=='whisper-'+profile.model||(profile.openblasThreads&&result.openblasThreads!==profile.openblasThreads))throw new ApiError(503,'Konfigurasi model suara tidak sesuai profil yang diminta.');
     return result;

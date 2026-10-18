@@ -17,7 +17,7 @@ export function decodeAudioBody(body){
   requireValue(audio.length>0 && audio.length<=MAX_AUDIO_BYTES && audio.toString('base64')===text,'Rekaman tidak valid atau terlalu besar.');
   return audio;
 }
-const messages={invalid_audio:'Rekaman tidak dapat dibaca. Rekam ulang atau ketik pesanan.',too_long:'Rekaman melebihi 30 detik. Rekam pesanan yang lebih singkat.',too_short:'Rekaman terlalu singkat. Ucapkan pesanan lalu hentikan rekaman.',no_speech:'Ucapan belum terdengar jelas. Dekatkan mikrofon lalu rekam ulang, atau ketik pesanan.',too_much_text:'Hasil suara terlalu panjang. Rekam pesanan yang lebih singkat.'};
+const messages={unreliable_speech:'Hasil ucapan berulang atau kurang jelas. Dekatkan mikrofon, ucapkan nama menu dan jumlah dengan jeda, lalu rekam ulang. Kamu juga bisa mengetik pesanan.',invalid_audio:'Rekaman tidak dapat dibaca. Rekam ulang atau ketik pesanan.',too_long:'Rekaman melebihi 30 detik. Rekam pesanan yang lebih singkat.',too_short:'Rekaman terlalu singkat. Ucapkan pesanan lalu hentikan rekaman.',no_speech:'Ucapan belum terdengar jelas. Dekatkan mikrofon lalu rekam ulang, atau ketik pesanan.',too_much_text:'Hasil suara terlalu panjang. Rekam pesanan yang lebih singkat.'};
 export function runSpeechProcess(audio,{check=false,signal,timeoutMs=90000,spawnProcess=spawn}={}){
   return new Promise((resolve,reject)=>{
     const python=path.join(root,'.venv-voice',process.platform==='win32'?'Scripts/python.exe':'bin/python');

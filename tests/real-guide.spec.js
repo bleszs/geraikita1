@@ -15,23 +15,13 @@ async function capture(page,name){
   await page.screenshot({path:'.impeccable/review/'+filename+'.png',fullPage:true,animations:'disabled'});
 }
 
-test('guest gets optional next/back/skip instructions without submitting registration or losing ordinary text fields',async({page})=>{
-  await page.goto('/');await expect(welcome(page)).toBeVisible();
-  await page.getByLabel('Nama usaha',{exact:true}).fill('Nama belum dikirim');await page.getByLabel('Email',{exact:true}).fill('not-submitted@example.test');
-  let posts=0;page.on('request',r=>{if(r.method()==='POST')posts++;});
-  await page.setViewportSize({width:1440,height:1050});await capture(page,'guide-welcome-desktop');
-  await page.setViewportSize({width:320,height:900});await capture(page,'guide-welcome-mobile');
-  await page.setViewportSize({width:1440,height:1050});
-  await welcome(page).getByRole('button',{name:'Mulai panduan',exact:true}).click();
-  await expect(tour(page)).toContainText('Langkah 1 dari 6');await expect(tour(page).getByRole('heading')).toBeFocused();
-  await expect(tour(page)).toContainText('Kenalan dulu dengan Gerai Kita');
-  await page.setViewportSize({width:320,height:900});await expect(page.locator('.guide-arrow')).toBeVisible();await capture(page,'guide-arrow-guest-intro-mobile');
-  await page.setViewportSize({width:1440,height:1050});
-  await tour(page).getByRole('button',{name:'Lanjut',exact:true}).click();await expect(tour(page)).toContainText('Isi identitas usahamu');
-  await tour(page).getByRole('button',{name:'Kembali',exact:true}).click();await expect(tour(page)).toContainText('Langkah 1 dari 6');
-  await tour(page).getByRole('button',{name:'Lewati panduan'}).click();await expect(tour(page)).toHaveCount(0);
-  await expect(page.getByLabel('Nama usaha',{exact:true})).toHaveValue('Nama belum dikirim');await expect(page.getByLabel('Email',{exact:true})).toHaveValue('not-submitted@example.test');
-  expect(posts).toBe(0);await page.reload();await expect(welcome(page)).toHaveCount(0);
+test('registration and login have no welcome tutorial or automatic overlay',async({page})=>{
+  await page.goto('/');await expect(welcome(page)).toHaveCount(0);await expect(tour(page)).toHaveCount(0);
+  await page.getByLabel('Nama usaha',{exact:true}).fill('Nama belum dikirim');
+  await page.setViewportSize({width:1440,height:1050});await capture(page,'guide-free-register-desktop');
+  await page.setViewportSize({width:320,height:900});await capture(page,'guide-free-register-mobile');
+  await page.locator('[data-action="show-login"]').click();await expect(welcome(page)).toHaveCount(0);await expect(tour(page)).toHaveCount(0);
+  await page.reload();await expect(welcome(page)).toHaveCount(0);
 });
 
 test('a newly registered account autoplays each page guide once and keeps help only in the top navbar',async({page})=>{

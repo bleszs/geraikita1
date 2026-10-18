@@ -1,0 +1,245 @@
+{
+  "checkedAt": "2026-10-18T00:17:14.588135+00:00",
+  "repository": {
+    "remote": "https://github.com/bleszs/rahasiagelap.git",
+    "branch": "main",
+    "head": "29565e6f9a5d76e0857cf277f0d9528991c21dd1",
+    "allOriginBranchHeadsContained": true,
+    "updateMethod": "fast-forward",
+    "newCommitCreated": false,
+    "pushed": true
+  },
+  "railway": {
+    "url": "https://web-production-a3e13.up.railway.app",
+    "deploymentId": "72ed4653-75bb-47bd-9709-48b511b936fc",
+    "status": "SUCCESS",
+    "delivery": "CLI upload from main",
+    "githubAutodeployConnected": false,
+    "githubSourceError": "User does not have access to the repo"
+  },
+  "cloudVoice": {
+    "checkedAt": "2026-10-18T00:16:57.865Z",
+    "database": ":memory:",
+    "productionFixturesCreated": false,
+    "scope": "Authenticated cloud speech runtime and honest parser fallback; permitted known public clip, not domain accuracy.",
+    "health": {
+      "qwenAvailable": false,
+      "speechAvailable": true,
+      "speechModel": "whisper-tiny"
+    },
+    "auth": {
+      "unauthenticatedSpeech": 401,
+      "foreignOrigin": 403
+    },
+    "speech": [
+      {
+        "role": "owner",
+        "httpStatus": 200,
+        "nonemptyTranscript": true,
+        "model": "whisper-tiny",
+        "durationSeconds": 8.58,
+        "elapsedMs": 1337,
+        "transcriptSha256": "7b7aa7cec2c9ad03394cc822b79651da9bd51443738369701e741ac8026a7117"
+      },
+      {
+        "role": "cashier",
+        "httpStatus": 200,
+        "nonemptyTranscript": true,
+        "model": "whisper-tiny",
+        "durationSeconds": 8.58,
+        "elapsedMs": 1473,
+        "transcriptSha256": "7b7aa7cec2c9ad03394cc822b79651da9bd51443738369701e741ac8026a7117"
+      }
+    ],
+    "extraction": {
+      "httpStatus": 200,
+      "mode": "fallback",
+      "realQwenInference": false,
+      "reviewRequired": true
+    },
+    "operationalData": {
+      "sales": 0,
+      "kitchenOrders": 0,
+      "textAiQuotaUsed": 0,
+      "speechQuotaUsed": 2
+    },
+    "production": {
+      "tables": 36,
+      "unchanged": true
+    },
+    "passed": true,
+    "deploymentId": "72ed4653-75bb-47bd-9709-48b511b936fc"
+  },
+  "localAi": {
+    "reportPassed": true,
+    "checksPassed": 8,
+    "model": "qwen2.5:1.5b",
+    "checks": [
+      {
+        "name": "installed-model-identity",
+        "passed": true,
+        "elapsedMs": 34,
+        "digest": "65ec06548149b04c096a120e4a6da9d4017ea809c91734ea5631e89f96ddc57b",
+        "bytes": 986061892
+      },
+      {
+        "name": "both-model-health",
+        "passed": true,
+        "elapsedMs": 2,
+        "qwenModel": "qwen2.5:1.5b",
+        "speechModel": "whisper-tiny"
+      },
+      {
+        "name": "authorization-and-origin",
+        "passed": true,
+        "elapsedMs": 26,
+        "unauthenticated": 401,
+        "missingCsrf": 403,
+        "foreignOrigin": 403,
+        "endpoints": 3
+      },
+      {
+        "name": "authenticated-qwen-extraction",
+        "passed": true,
+        "elapsedMs": 4058,
+        "httpStatus": 200,
+        "mode": "ollama",
+        "model": "qwen2.5:1.5b",
+        "itemsMatched": true,
+        "originalModifierPreservedForReview": true
+      },
+      {
+        "name": "authenticated-speech-inference",
+        "passed": true,
+        "elapsedMs": 1762,
+        "httpStatus": 200,
+        "model": "whisper-tiny",
+        "durationSeconds": 8.58,
+        "audioSha256": "7bbe28c05cd9a767be230e61be4935f194e08a48e3ab7bec91455d93590aa668",
+        "transcriptSha256": "b273f7e49897c2b419d71732df66f92f14e80adf4edcc15726b02dfe6e2b1489"
+      },
+      {
+        "name": "ambiguous-numeric-input-rejected-without-quota-charge",
+        "passed": true,
+        "elapsedMs": 297,
+        "rejectedRequests": 8,
+        "additionalQuotaConsumed": 0
+      },
+      {
+        "name": "inference-preserves-business-data-and-meters-ai",
+        "passed": true,
+        "elapsedMs": 3,
+        "tablesCompared": 35,
+        "unchanged": true,
+        "successfulAiCallsRecorded": 2
+      },
+      {
+        "name": "reviewed-kitchen-order-completes-once",
+        "passed": true,
+        "elapsedMs": 164,
+        "reviewedExplicitly": true,
+        "duplicateCreateAndActionsSafe": true,
+        "sales": 1,
+        "stockConsumed": 40
+      }
+    ],
+    "notCloudQwenEvidence": true
+  },
+  "cloudQwen": {
+    "active": false,
+    "model": "qwen2.5:1.5b",
+    "isTrialing": true,
+    "paymentMethodPresent": false,
+    "memoryLimitBytes": 1000000000,
+    "volumeLimitMB": 500,
+    "userCanActivatePaidPlanNow": false,
+    "extractionMode": "fallback",
+    "modelSubstituted": false
+  },
+  "browser": {
+    "https": true,
+    "secureContext": true,
+    "getUserMediaAvailable": true,
+    "mediaRecorderAvailable": true,
+    "webmOpusSupported": true,
+    "title": "Gerai Kita Â· Akun usaha",
+    "ownerSessionCreated": false
+  },
+  "publicProbes": [
+    {
+      "route": "/",
+      "status": 200,
+      "hsts": "max-age=31536000",
+      "https": true
+    },
+    {
+      "route": "/api/health",
+      "status": 200,
+      "health": {
+        "storage": "sqlite",
+        "mode": "live",
+        "ai": {
+          "provider": "ollama",
+          "model": "qwen2.5:1.5b",
+          "available": false
+        },
+        "speech": {
+          "available": true,
+          "model": "whisper-tiny",
+          "engine": "faster-whisper",
+          "compute": "cpu-int8",
+          "pretrained": true,
+          "language": "id",
+          "maxSeconds": 30,
+          "maxBytes": 1048576,
+          "reason": "Ucapan diproses oleh layanan suara aplikasi. Rekaman tidak disimpan."
+        }
+      }
+    },
+    {
+      "route": "/api/bootstrap",
+      "status": 401
+    },
+    {
+      "route": "/api/staff/screen",
+      "status": 200
+    },
+    {
+      "route": "/app.js",
+      "status": 200,
+      "matchesMainSource": true
+    },
+    {
+      "route": "/live-views.js",
+      "status": 200,
+      "matchesMainSource": true
+    },
+    {
+      "route": "/sw.js",
+      "status": 200,
+      "matchesMainSource": true
+    },
+    {
+      "route": "/voice.js",
+      "status": 200,
+      "matchesMainSource": true
+    }
+  ],
+  "database": {
+    "originalTablesCompared": 30,
+    "originalRowsCompared": 0,
+    "originalRowsUnchanged": true,
+    "postMigrationTables": 36,
+    "integrity": "ok",
+    "foreignKeyErrors": 0,
+    "productionRestorePerformed": false
+  },
+  "modelAccuracyBenchmark": false,
+  "newWeightsTrained": false,
+  "physicalDeviceTested": false,
+  "deploymentContractTests": {
+    "command": "npm run test:deployment",
+    "passed": 7,
+    "failed": 0
+  }
+}

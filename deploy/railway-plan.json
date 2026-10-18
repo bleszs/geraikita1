@@ -1,12 +1,12 @@
 {
   "kind": "gerai-kita-deployment-plan",
-  "status": "web-deployed-awaiting-paid-plan-activation",
+  "status": "main-deployed-voice-active-qwen-cloud-awaiting-capacity",
   "provider": "railway",
   "projectName": "gerai-kita",
   "source": {
     "repository": "bleszs/rahasiagelap",
-    "branch": "feat/kitchen-capacity-and-waste",
-    "delivery": "CLI upload; GitHub continuous deployment not connected"
+    "branch": "main",
+    "delivery": "CLI upload from main; Railway GitHub source access not connected"
   },
   "services": [
     {

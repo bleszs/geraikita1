@@ -107,10 +107,6 @@ export function createGuideController({getContext,navigate,notify,escape,consume
         return;
       }
     }
-    if(!context.signedIn&&!progress.welcomeSeen&&!active&&context.route!=='panduan'){
-      const anchor=main.querySelector('h1');
-      anchor?.insertAdjacentHTML('afterend',`<section class="guide-welcome" aria-labelledby="guide-welcome-title"><h2 id="guide-welcome-title">Baru mencoba Gerai Kita?</h2><p>Ikuti panah untuk mengenal aplikasi dan fitur-fiturnya satu per satu. Kamu bisa melewati tur dan membukanya lagi kapan saja.</p><div class="actions"><button type="button" class="button" data-guide-topic="${context.signedIn?(staffTopic||'mulai'):'akun'}">Mulai panduan</button><button type="button" class="button secondary" data-guide-action="dismiss">Lewati</button></div></section>`);
-    }
     renderResume();renderTour();
   }
   function routeStep(){

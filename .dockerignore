@@ -11,6 +11,7 @@
 !scripts/**
 !models/
 !models/speech-source.json
+!models/speech-base-source.json
 !deploy/
 !deploy/ollama/
 !deploy/ollama/**

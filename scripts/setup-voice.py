@@ -1,12 +1,16 @@
 """Explicit, pinned model installation. No business data or audio is downloaded."""
 import hashlib
 import json
+import sys
 from pathlib import Path
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
-LOCK = json.loads((ROOT / "models/speech-source.json").read_text(encoding="utf-8"))
-TARGET = ROOT / "models/speech/whisper-tiny"
+if sys.argv[1:] not in ([], ['--model', 'base']):
+    raise ValueError('Use no argument for Tiny, or --model base.')
+MODEL = 'base' if sys.argv[1:] else 'tiny'
+LOCK = json.loads((ROOT / ('models/speech-base-source.json' if MODEL == 'base' else 'models/speech-source.json')).read_text(encoding="utf-8"))
+TARGET = ROOT / ('models/speech/whisper-' + MODEL)
 
 
 def valid(data, item):

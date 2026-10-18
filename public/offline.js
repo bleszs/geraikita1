@@ -1,30 +1,60 @@
 const DATABASE = 'gerai-kita-device-v2';
 let opening;
+const storageError = () => new Error('Penyimpanan perangkat tidak tersedia. Izinkan penyimpanan situs, lalu coba lagi.');
 function database() {
-  if (!opening) opening = new Promise((resolve, reject) => {
+  if (!opening) {
+    const pending = new Promise((resolve, reject) => {
     const request = indexedDB.open(DATABASE, 1);
     request.onupgradeneeded = () => {
       request.result.createObjectStore('snapshots');
       request.result.createObjectStore('drafts', { keyPath: 'id' });
     };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(new Error('Penyimpanan perangkat tidak tersedia. Izinkan penyimpanan situs, lalu coba lagi.'));
-  }).catch(() => { throw new Error('Penyimpanan perangkat tidak tersedia. Izinkan penyimpanan situs, lalu coba lagi.'); });
+    request.onsuccess = () => {
+      const db=request.result;
+      const invalidate=()=>{if(opening===pending)opening=undefined;};
+      db.onclose=invalidate;
+      db.onversionchange=()=>{invalidate();db.close();};
+      resolve(db);
+    };
+    request.onerror = () => reject(storageError());
+    });
+    opening=pending;
+    pending.catch(()=>{if(opening===pending)opening=undefined;});
+  }
   return opening;
 }
 async function transaction(name, mode, work) {
-  const db = await database();
+  let tx;
+  // Retry only when no transaction has started, never after an uncertain write.
+  for(let attempt=0;attempt<2;attempt++){
+    let db;
+    try{db=await database();tx=db.transaction(name,mode);break;}
+    catch(error){
+      if(error.name!=='InvalidStateError'||attempt===1)throw storageError();
+      opening=undefined;db?.close();
+    }
+  }
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(name, mode); let result; let failure;
+    let result; let failure;
     tx.oncomplete = () => resolve(result);
     tx.onabort = tx.onerror = () => reject(failure || new Error('Catatan belum tersimpan di perangkat. Periksa ruang penyimpanan lalu coba lagi.'));
-    work(tx.objectStore(name), value => { result = value; }, error => { failure = error; tx.abort(); });
+    try{work(tx.objectStore(name), value => { result = value; }, error => { failure = error; tx.abort(); });}
+    catch{failure=storageError();tx.abort();}
   });
 }
 export const scopeOf = data => `${data.workspaceId}:${data.workspaceEpoch}:${data.business.id}`+(data.account?.role&&data.account.role!=='owner'?`:${data.account.id}:${data.account.role}:${data.account.roleRevision}`:'');
-export const readSnapshot = () => transaction('snapshots', 'readonly', (store, done) => { store.get('latest').onsuccess = e => done(e.target.result); });
-export const saveSnapshot = data => transaction('snapshots', 'readwrite', store => { store.put({ data, savedAt: new Date().toISOString() }, 'latest'); });
-export const clearSnapshot = () => transaction('snapshots','readwrite',store=>{store.delete('latest');});
+export const readSnapshot = () => {
+  try{if(localStorage.getItem('gerai-kita-signed-out')==='1')return Promise.resolve(undefined);}catch{}
+  return transaction('snapshots', 'readonly', (store, done) => { store.get('latest').onsuccess = e => done(e.target.result); });
+};
+export const saveSnapshot = async data => {
+  await transaction('snapshots', 'readwrite', store => { store.put({ data, savedAt: new Date().toISOString() }, 'latest'); });
+  try{localStorage.removeItem('gerai-kita-signed-out');}catch{}
+};
+export const clearSnapshot = () => {
+  try{localStorage.setItem('gerai-kita-signed-out','1');}catch{}
+  return transaction('snapshots','readwrite',store=>{store.delete('latest');});
+};
 export const readAction = scope => transaction('snapshots','readonly',(store,done)=>{store.get('action:'+scope).onsuccess=e=>done(e.target.result);});
 export const saveAction = (scope,action) => transaction('snapshots','readwrite',(store,done,fail)=>{
   store.get('action:'+scope).onsuccess=e=>{

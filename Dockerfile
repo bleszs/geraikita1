@@ -12,9 +12,10 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 COPY requirements-voice.txt ./
 RUN python -m venv .venv-voice \
     && .venv-voice/bin/python -m pip install --no-cache-dir -r requirements-voice.txt
-COPY models/speech-source.json models/speech-source.json
+COPY models/speech-source.json models/speech-base-source.json models/
 COPY scripts/setup-voice.py scripts/setup-voice.py
-RUN .venv-voice/bin/python scripts/setup-voice.py
+RUN .venv-voice/bin/python scripts/setup-voice.py \
+    && .venv-voice/bin/python scripts/setup-voice.py --model base
 
 # Explicit source copies: business databases, .env, local caches and demo data
 # never enter the image. The persistent Railway volume is attached at runtime.
@@ -24,5 +25,5 @@ COPY server/ server/
 COPY scripts/ scripts/
 
 ENV NODE_ENV=production BIND_HOST=0.0.0.0 PYTHONUTF8=1 \
-    HF_HUB_OFFLINE=1 HF_HUB_DISABLE_TELEMETRY=1
+    HF_HUB_OFFLINE=1 HF_HUB_DISABLE_TELEMETRY=1 SPEECH_PROFILE=base-orders
 CMD ["node", "scripts/serve.mjs"]
