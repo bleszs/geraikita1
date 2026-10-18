@@ -1976,6 +1976,66 @@ tbody tr:last-child td {
   }
 }
 
+/* Cashier finance panel */
+.staff-finance .finance-metrics { display: flex; gap: 16px; flex-wrap: wrap }
+.staff-finance .finance-metrics>div { flex: 1; min-width: 140px }
+.staff-finance .finance-metrics span { display: block; color: var(--muted); font-size: 13px }
+.staff-finance .finance-metrics strong { display: block; font-size: 22px; margin-top: 4px }
+.staff-finance .finance-metrics small { color: var(--muted) }
+.finance-methods { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 8px }
+.finance-methods li { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius); font-size: 13px }
+.finance-methods strong { font-size: 15px }
+
+/* Payment + receipt overlays */
+.overlay { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, .45); overflow: auto }
+.overlay-card { background: var(--surface); color: var(--ink); border-radius: 18px; box-shadow: 0 24px 60px -12px rgba(0, 0, 0, .5); padding: 22px; width: 100%; max-width: 380px }
+.pay-total { font-size: 16px; margin: 4px 0 16px }
+.pay-total strong { font-size: 22px }
+.pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+.pay-method { padding: 14px; border: 2px solid var(--line); border-radius: var(--radius); background: var(--canvas); color: var(--ink); font-weight: 600; cursor: pointer }
+.pay-method.is-active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink) }
+.pay-detail { margin: 16px 0; text-align: center }
+.qris-box { margin: 0 auto 10px; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; border: 2px dashed var(--line); border-radius: 12px; font-weight: 700; letter-spacing: 2px; line-height: 1.3; color: var(--muted) }
+
+/* Printable receipt: fixed black-on-white so it prints clearly in any theme */
+.receipt-card { max-width: 340px }
+.receipt { font-family: ui-monospace, Menlo, Consolas, monospace; color: #111; background: #fff; padding: 18px; border-radius: 12px }
+.receipt-head { text-align: center; display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px }
+.receipt-mark { font-size: 26px }
+.receipt-head strong { font-size: 17px }
+.receipt-meta { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: #444; border-bottom: 1px dashed #999; padding-bottom: 10px; margin-bottom: 10px }
+.receipt-items { width: 100%; border-collapse: collapse; font-size: 13px }
+.receipt-items td { padding: 3px 0; vertical-align: top }
+.receipt-items td:last-child { text-align: right; white-space: nowrap }
+.receipt-items small { display: block; color: #666 }
+.receipt-total { display: flex; justify-content: space-between; border-top: 1px dashed #999; margin-top: 10px; padding-top: 10px; font-size: 16px }
+.receipt-pay, .receipt-fee { display: flex; justify-content: space-between; font-size: 13px; margin-top: 4px }
+.receipt-thanks { text-align: center; margin: 14px 0 0; font-size: 13px; color: #333 }
+
+@media print {
+  body * { visibility: hidden !important }
+  #receipt-print, #receipt-print * { visibility: visible !important }
+  .overlay { position: static; background: none; padding: 0 }
+  .overlay-card { box-shadow: none; padding: 0 }
+  #receipt-print { position: absolute; left: 0; top: 0; width: 100%; max-width: none }
+  .no-print { display: none !important }
+}
+
+/* Kitchen board: color-coded status and larger touch targets */
+.staff-shell .tag-ready { background: var(--green-bg); color: var(--green) }
+.staff-shell .tag-preparing, .staff-shell .tag-active { background: var(--accent-soft); color: var(--accent-ink) }
+.staff-shell .tag-passive { background: var(--warn-bg); color: var(--warn) }
+.staff-shell .kitchen-order { border-left: 4px solid var(--line) }
+.staff-shell .kitchen-order:has(.tag-ready) { border-left-color: var(--green) }
+.staff-shell .kitchen-order:has(.tag-preparing), .staff-shell .kitchen-order:has(.tag-active) { border-left-color: var(--accent) }
+.staff-shell .kitchen-task { padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 10px }
+.staff-shell .kitchen-task .actions { margin-top: 10px }
+.staff-shell .kitchen-task .actions .button, .staff-shell .kitchen-order>.actions .button { min-height: 46px; font-size: 15px; flex: 1 1 auto }
+@media (max-width: 640px) {
+  .staff-shell .kitchen-task .actions, .staff-shell .kitchen-order>.actions { flex-direction: column }
+  .staff-shell .kitchen-task .actions .button, .staff-shell .kitchen-order>.actions .button { width: 100% }
+}
+
 dialog {
   background: var(--surface);
   color: var(--ink);

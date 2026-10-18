@@ -53,7 +53,7 @@ function clearDisplaySecrets(){ui.recoveryCodesResult=null;ui.kitchenExtraction=
 async function adopt(data){
   if(!state)clearDisplaySecrets();
   const before=state&&scopeOf(state);state=data;connected=true;snapshotAt=new Date().toISOString();
-  if(before&&before!==scopeOf(data)){clearDisplaySecrets();clearVoice();values={};ui.editor=null;ui.review=null;ui.cancel=null;ui.reviewId=null;ui.usageReview=null;}
+  if(before&&before!==scopeOf(data)){clearDisplaySecrets();clearVoice();values={};ui.editor=null;ui.review=null;ui.cancel=null;ui.reviewId=null;ui.usageReview=null;ui.pay=null;ui.receipt=null;}
   try{if(isStaff())await clearSnapshot();else await saveSnapshot(data);}catch(err){notify(err.message);}
   pendingAction=null;
   try{
@@ -251,6 +251,7 @@ document.addEventListener('submit',async event=>{
     else if(kind==='kitchen-station'){values['station:'+b.station]={...b};await request('/kitchen/stations',{station:b.station,cooks:Number(b.cooks),equipment:b.equipment===''?null:Number(b.equipment),agingMinutes:Number(b.agingMinutes),revision:Number(b.revision)},state.csrf);delete values['station:'+b.station];await refresh();notify('Kapasitas stasiun '+b.station+' tersimpan. Giliran antrean mengikuti kapasitas dan batas tunggu baru.');}
     else if(kind==='usage-decision'){const editor=ui.usageReview;if(!editor)throw new Error('Buka kembali pemeriksaan dari tanggal yang dipilih.');await request('/usage-reviews',{...editor,decision:b.decision,note:b.note||'',confirmed:b.confirmed==='on'},state.csrf);await refresh();ui.usageReview=null;values['usage-decision']={};notify('Hasil pemeriksaan tersimpan. Stok dan transaksi tidak diubah.');}
     else if(kind==='profile'){await request('/account/profile',{businessName:b.businessName},state.csrf);await refresh();values.profile={};notify('Nama usaha tersimpan.');}
+    else if(kind==='withdraw'){await request('/withdrawals',{destinationType:b.destinationType,destinationDetail:b.destinationDetail,amount:Number(b.amount),idempotencyKey:crypto.randomUUID()},state.csrf);await refresh();values.withdraw={};notify('Penarikan berhasil (demo). Saldo sudah diperbarui.');}
     else if(kind==='password'){if(b.newPassword!==b.repeatPassword)throw new Error('Ulangan kata sandi baru belum sama.');const result=await request('/account/password',{currentPassword:b.currentPassword,newPassword:b.newPassword},state.csrf);await refresh();notify(`Kata sandi tersimpan. ${result.revokedSessions} sesi lain dikeluarkan.`);}
     else if(kind==='recovery-codes'){const result=await request('/account/recovery-codes',{confirmed:b.confirmed==='on'},state.csrf);ui.recoveryCodesResult=result.codes;await refresh();notify('Kode pemulihan baru dibuat. Salin dan simpan sekarang; kode lama tidak berlaku lagi.');}
     else if(kind==='community-settings'){await request('/community/settings',{communityName:b.communityName},state.csrf);await refresh();values['community-settings']={};notify('Nama kelompok tersimpan.');}
@@ -388,6 +389,38 @@ document.addEventListener('click',async event=>{
       if(!pendingAction){ui.staffReview=null;ui.staffReviewReason=null;values['staff-extract']={};values['staff-review']={};}
     }catch(err){notify(err.message);}finally{busy=false;render();}return;
   }
+  if(action==='staff-pay'){
+    const kind=b.dataset.kind;
+    if(kind==='complete'){
+      const o=state.kitchen?.orders.find(x=>x.id===b.dataset.id);if(!o)return;
+      ui.pay={kind:'complete',orderId:o.id,revision:Number(b.dataset.revision),items:o.items.filter(i=>!i.voided).map(i=>({name:i.name,qty:i.qty,unitPrice:i.unitPrice})),total:o.total,label:o.label,method:null};
+    }else{
+      if(!ui.staffReview?.length)return;
+      if(ui.staffReviewRevision!==state.catalogRevision)return notify('Katalog berubah. Proses ulang pesanan sebelum mengirim.');
+      const items=structuredClone(ui.staffReview);
+      if(items.some(i=>!i.id||!Number.isInteger(i.qty)||i.qty<1||i.qty>99||i.note?.length>500))return notify('Periksa menu, jumlah 1–99, dan catatan setiap item.');
+      const detailed=items.map(i=>{const mnu=state.menu.find(m=>m.id===i.id);return {id:i.id,qty:i.qty,note:i.note||'',name:mnu?.name||i.id,unitPrice:mnu?.price||0};});
+      ui.pay={kind:'direct',rawItems:items.map(i=>({id:i.id,qty:i.qty,note:i.note||''})),items:detailed,total:detailed.reduce((a,i)=>a+i.unitPrice*i.qty,0),label:(values['staff-review']||{}).label||'',revision:ui.staffReviewRevision,method:null};
+    }
+    render();document.querySelector('#pay-title')?.focus();return;
+  }
+  if(action==='pay-method'){if(ui.pay){ui.pay.method=b.dataset.method;render();document.querySelector('[data-action="pay-confirm"]')?.focus();}return;}
+  if(action==='pay-cancel'){ui.pay=null;render();return;}
+  if(action==='close-receipt'){ui.receipt=null;render();return;}
+  if(action==='print-receipt'){window.print();return;}
+  if(action==='pay-confirm'){
+    const p=ui.pay;if(!p?.method)return;
+    busy=true;lockControls();
+    try{
+      if(p.kind==='complete')await durable('kitchenChange',`/kitchen/orders/${p.orderId}/actions`,{action:'complete',revision:p.revision,paymentMethod:p.method,idempotencyKey:kitchenKey()},'Pembayaran & penyerahan: '+p.label);
+      else await durable('staffSale','/transactions',{items:p.rawItems,catalogRevision:p.revision,paymentMethod:p.method,idempotencyKey:kitchenKey()},'Penjualan langsung: '+p.items.map(i=>`${i.qty} ${i.name}`).join(', '));
+      if(!pendingAction){
+        ui.receipt={businessName:state.business.name,cashier:state.account.name,items:p.items,total:p.total,label:p.label,paymentMethod:p.method,fee:Math.round(p.total*0.1),created_at:new Date().toISOString(),id:p.orderId||crypto.randomUUID()};
+        if(p.kind==='direct'){ui.staffReview=null;ui.staffReviewReason=null;values['staff-extract']={};values['staff-review']={};}
+      }
+    }catch(err){notify(err.message);}finally{ui.pay=null;busy=false;render();}
+    return;
+  }
   if(action==='back-order'){ui.review=null;render();return;}
   if(action==='add-order'){ui.review.push({id:state.menu[0].id,qty:1,note:''});ui.reviewId=null;render();return;}
   if(action==='remove-order'){if(ui.review.length>1)ui.review.splice(Number(b.dataset.index),1);ui.reviewId=null;render();return;}
@@ -402,7 +435,7 @@ document.addEventListener('click',async event=>{
     else if(action==='reconnect'||action==='refresh'){await refresh();if(!ui.kitchenLive){kitchenEvents?.close();kitchenEvents=null;kitchenEventScope='';}}
     else if(action==='retry-action'){const original=pendingAction;await refresh();if(pendingAction){if(original.scope!==scopeOf(state))throw new Error('Masuk ke akun asal untuk memeriksa catatan.');await sendAction(original);}else notify('Catatan ditemukan di server. Tidak dikirim dua kali.');}
     else if(action==='kitchen-station-latest'){const station=b.dataset.station;delete values['station:'+station];ui.stationFocus=station;}
-    else if(action==='logout'){clearDisplaySecrets();clearVoice();await request('/auth/logout',{},state.csrf);let storageWarning='';try{await clearSnapshot();}catch{storageWarning='Kamu sudah keluar. Penyimpanan perangkat belum dapat dibersihkan; tutup tab ini jika memakai perangkat bersama.';}state=null;pendingAction=null;values={};deviceDrafts=[];ui.displayLink=null;ui.displayCreatePending=null;ui.displayRevoke=null;ui.auth='login';ui.review=null;ui.editor=null;ui.cancel=null;ui.usageReview=null;ui.recoveryCodesResult=null;ui.error='';document.querySelector('#toast').hidden=true;if(storageWarning)notify(storageWarning);}
+    else if(action==='logout'){clearDisplaySecrets();clearVoice();await request('/auth/logout',{},state.csrf);let storageWarning='';try{await clearSnapshot();}catch{storageWarning='Kamu sudah keluar. Penyimpanan perangkat belum dapat dibersihkan; tutup tab ini jika memakai perangkat bersama.';}state=null;pendingAction=null;values={};deviceDrafts=[];ui.displayLink=null;ui.displayCreatePending=null;ui.displayRevoke=null;ui.auth='login';ui.review=null;ui.editor=null;ui.cancel=null;ui.usageReview=null;ui.pay=null;ui.receipt=null;ui.recoveryCodesResult=null;ui.error='';document.querySelector('#toast').hidden=true;if(storageWarning)notify(storageWarning);}
     else if(action==='confirm-order')await confirmOrder();
     else if(action==='review-catalog'){await refresh();ui.reviewRevision=state.catalogRevision;}
     else if(action==='delete-draft'){await removeDraft(b.dataset.id,true);deviceDrafts=(await listDrafts()).filter(d=>d.scope===scopeOf(state));}

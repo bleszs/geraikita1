@@ -115,7 +115,7 @@ test('blocked guide storage still allows starting, advancing and skipping with a
   await tour(page).getByRole('button',{name:'Lewati panduan'}).click();await expect(welcome(page)).toHaveCount(0);await expect(tour(page)).toHaveCount(0);
 });
 
-test('all twenty topics and one hundred steps run end to end without posting business actions',async({page})=>{
+test('all twenty-one topics and one hundred four steps run end to end without posting business actions',async({page})=>{
   await register(page);const before=await state(page);let posts=0;page.on('request',r=>{if(r.method()==='POST')posts++;});
   let visited=0;
   for(const topic of GUIDE_TOPICS){
@@ -126,7 +126,7 @@ test('all twenty topics and one hundred steps run end to end without posting bus
     }
     await expect(tour(page)).toHaveCount(0);
   }
-  expect(visited).toBe(100);expect(posts).toBe(0);
+  expect(visited).toBe(104);expect(posts).toBe(0);
   const after=await state(page);for(const key of ['stock','catalog','menu','transactions','stockReceipts','offers','transfers'])expect(after[key]).toEqual(before[key]);
 });
 

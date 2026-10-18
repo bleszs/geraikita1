@@ -1,7 +1,7 @@
 // Product instructions only. No sample account, prices, stock or transactions.
 const step=(id,title,text,route,target,controls=[],hint='')=>({id,title,text,route,target,controls,hint});
 const topic=(id,title,description,steps,actions=[],ownerOnly=false)=>({id,title,description,steps,actions,ownerOnly});
-export const GUIDE_VERSION=11;
+export const GUIDE_VERSION=12;
 export const GUIDE_TOPICS=[
   topic('paket','Paket dan pemakaian AI','Pahami kuota nyata dan tambahan sesuai kebutuhan usaha.',[
     step('dasar','Paket dasar tidak membatasi sepuluh menu','Paket Mulai gratis untuk pencatatan manual, stok dasar dan bergabung dalam kulakan bersama. Paket berlaku berdasarkan kebutuhan penggunaan; ukuran usaha bukan syarat peningkatan.','pengaturan','#plan-title'),
@@ -13,6 +13,12 @@ export const GUIDE_TOPICS=[
     step('periksa','Bantuan mengisi, kamu memeriksa','Bantu isi pesanan mengisi menu, porsi dan catatan pada formulir. AI atau parser lokal diberi penjelasan yang sesuai; hasil belum mengubah stok atau penjualan. Jika teks ditolak, hasil sebelumnya tetap dapat diperiksa. Lanjutkan isi manual melepaskan pemeriksaan katalog hasil AI.','dapur','[data-form="kitchen-extract"]',[['Bantu isi pesanan','Susun rincian tanpa mengirim ke dapur.'],['Lanjutkan isi manual','Lanjutkan dengan isian yang diperiksa sendiri.']]),
     step('kirim','Kirim setelah semua rincian benar','Isi label dan sumber, koreksi menu, porsi serta catatan. Masukkan ke antrean baru mencadangkan bahan. Penjualan dicatat ketika semua item siap dan pesanan diselesaikan. Jika katalog berubah, proses ulang teks atau lanjutkan pemeriksaan manual.','dapur','[data-form="kitchen-new"]')
   ],['kitchen-clear-ai'],true),
+  topic('keuangan','Pembayaran dan keuangan','Terima pembayaran, cetak struk, lalu tarik saldo usaha ke bank atau e-wallet.',[
+    step('bayar','Terima pembayaran saat pesanan siap','Di layar kasir, Terima pembayaran & serahkan membuka pilihan metode: Tunai, QRIS, Transfer Bank atau E-Wallet. Pilih metode lalu Bayar & selesaikan untuk mencatat penjualan tepat satu kali. Bayar langsung & catat dipakai untuk pesanan yang langsung selesai tanpa antrean.','keuangan','.page-title'),
+    step('struk','Cetak struk setelah pembayaran','Setelah pembayaran tercatat, kasir dapat menekan Cetak struk; Selesai menutup struk. Pemasukan hari ini dan saldo berjalan tampil pada panel kasir dan pada halaman ini.','keuangan','.page-title'),
+    step('saldo','Pantau saldo dan pemasukan usaha','Saldo tersedia dihitung setelah potongan biaya aplikasi 10% dari setiap penjualan. Lihat juga rincian pemasukan hari ini per metode dan riwayat penarikan.','keuangan','.metrics'),
+    step('tarik','Tarik saldo ke bank atau e-wallet','Pilih tujuan, isi nomor rekening atau e-wallet dan jumlah, lalu Tarik ke bank / e-wallet. Penarikan ini simulasi untuk demo; tidak ada transfer uang nyata.','keuangan','[data-form="withdraw"]',[['Tarik ke bank / e-wallet','Kurangi saldo dan catat penarikan (demo).']])
+  ],['staff-pay','pay-method','pay-confirm','pay-cancel','print-receipt','close-receipt'],true),
   topic('mulai','Kenali aplikasi dari awal','Tur berpanah yang memperkenalkan Gerai Kita dan fitur-fiturnya.',[
     step('kenalan','Selamat datang di Gerai Kita','Gerai Kita membantu mengatur antrean dapur, mencatat penjualan, menghitung stok dari resep, dan membeli bahan bersama. Buka topik Operasional dapur untuk panduan proses memasak. Mari kenali bagian-bagiannya satu per satu.','ringkasan','.page-title'),
     step('ringkasan','Ringkasan: lihat keadaan usahamu','Di sini kamu melihat penjualan, bahan yang perlu perhatian dan langkah berikutnya. Angkanya berasal dari catatan usahamu sendiri.','ringkasan','.metrics'),
@@ -145,7 +151,7 @@ export const GUIDE_TOPICS=[
   ],['reconnect','retry-action','update-app'])
 ];
 
-export const PAGE_TOPICS={dapur:'dapur',layanan:'dapur',ringkasan:'mulai',stok:'bahan',pesanan:'pesanan',restock:'kulakan',kelompok:'kelompok',staf:'staf-pemilik',riwayat:'riwayat',pengaturan:'pengaturan',panduan:'navigasi'};
+export const PAGE_TOPICS={dapur:'dapur',layanan:'dapur',ringkasan:'mulai',stok:'bahan',pesanan:'pesanan',keuangan:'keuangan',restock:'kulakan',kelompok:'kelompok',staf:'staf-pemilik',riwayat:'riwayat',pengaturan:'pengaturan',panduan:'navigasi'};
 export function findTopic(id){return GUIDE_TOPICS.find(topic=>topic.id===id);}
 export function guideHelpHTML(escape,{signedIn=false}={}){
   return `<section class="section-panel guide-help" aria-labelledby="guide-help-title"><h2 id="guide-help-title">Pilih yang ingin dipelajari</h2><p>Ikuti langkah satu per satu, atau buka penjelasan tombol yang dibutuhkan. Panduan tidak mengisi atau mengirim catatan.</p><label for="guide-search">Cari fitur atau tombol</label><input id="guide-search" type="search" autocomplete="off" placeholder="Cari nama fitur atau tombol"><p class="small muted" id="guide-search-status" role="status"></p><div class="guide-resume-slot"></div><ul class="guide-topic-list">${GUIDE_TOPICS.map(topic=>`<li data-guide-result="${escape(topic.id)}"><div><h3>${escape(topic.title)}</h3><p>${escape(topic.description)}</p><small>${topic.steps.length} langkah${!signedIn&&topic.id!=='akun'?' · fitur usaha dibuka setelah masuk':''}</small></div><button type="button" class="button secondary" data-guide-topic="${escape(topic.id)}">Mulai<span class="sr-only"> panduan ${escape(topic.title)}</span></button></li>`).join('')}</ul><p class="guide-no-results" hidden>Tidak menemukan petunjuk yang cocok. Coba nama tombol atau kata lain.</p></section>`;

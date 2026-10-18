@@ -158,3 +158,23 @@ test('a waiting app update is offered before login without clearing fields and a
   await expect(page.getByRole('button',{name:'Muat ulang aplikasi',exact:true})).toBeVisible();await expect(page.getByLabel('Nama usaha',{exact:true})).toHaveValue('Isian belum dikirim');await expect(page.getByLabel('Kata sandi',{exact:true})).toHaveValue(password);
   await page.getByRole('button',{name:'Muat ulang aplikasi',exact:true}).click();await expect(page.getByLabel('Nama usaha',{exact:true})).toHaveValue('');await expect(page.getByRole('heading',{name:'Mulai dari usahamu sendiri.'})).toBeVisible();
 });
+
+test('owner sees takings after the 10% application fee in Keuangan and can withdraw to an e-wallet (demo)',async({page})=>{
+  await register(page);
+  const product=await addIngredient(page);
+  await fillReceipt(page,product);await page.getByRole('button',{name:'Simpan barang masuk',exact:true}).click();await expect(page.locator('.inventory-editor')).toHaveCount(0);
+  const s=await state(page);
+  const menu=await(await page.request.post('/api/menus',{data:{name:'Nasi goreng',price:12000,aliases:['nasgor'],recipe:{[product.id]:50},catalogRevision:s.catalogRevision,preparation:{minutes:5,passiveMinutes:0,station:'dapur'},csrf:s.csrf}})).json();
+  const s2=await state(page);
+  const sale=await page.request.post('/api/transactions',{data:{items:[{id:menu.id,qty:5}],catalogRevision:s2.catalogRevision,paymentMethod:'qris',idempotencyKey:crypto.randomUUID(),csrf:s2.csrf}});
+  expect(sale.status()).toBe(201);
+  await page.goto('/#keuangan');await page.getByRole('button',{name:'Perbarui data',exact:true}).click();
+  await expect(page.locator('#main h1')).toHaveText('Keuangan usaha.');
+  await expect(page.locator('.metrics')).toContainText('Rp 54.000');
+  await page.getByLabel('Tujuan penarikan',{exact:true}).selectOption('ewallet');
+  await page.getByLabel('Nomor rekening / e-wallet',{exact:true}).fill('0812-3456-7890');
+  await page.getByLabel('Jumlah (Rp)',{exact:true}).fill('20000');
+  await page.getByRole('button',{name:'Tarik ke bank / e-wallet',exact:true}).click();
+  await expect(page.locator('.transactions')).toContainText('Berhasil (demo)');
+  const fin=(await state(page)).finance;expect(fin.balance).toBe(34000);expect(fin.withdrawn).toBe(20000);
+});
