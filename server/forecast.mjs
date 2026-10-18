@@ -1,6 +1,7 @@
 import { addDays } from './common.mjs';
 import {predict,validateArtifact} from './ml/forecast-model.mjs';
 import {inspectHistory} from './ml/history-quality.mjs';
+import {evaluateLocalKulakan} from './ml/kulakan-model.mjs';
 
 const average = values => values.length ? values.reduce((s, n) => s + n, 0) / values.length : 0;
 const weekday = date => new Date(date + 'T12:00:00Z').getUTCDay();
@@ -23,7 +24,7 @@ export function backtest(series) {
     return [name, { mae: errors.length ? error / errors.length : null, wape: actual ? error / actual : null, observations: errors.length }];
   }));
 }
-export function forecast(series, stock, asOf, horizon = 2, unit = 'butir', trained = null) {
+export function forecast(series, stock, asOf, horizon = 2, unit = 'butir', trained = null, globalModel = null) {
   // Current partial day and future rows are excluded from training and backtesting.
   const completed = series.filter(p => p.date < asOf).sort((a, b) => a.date.localeCompare(b.date));
   const historyQuality = inspectHistory(completed, asOf);
@@ -49,11 +50,18 @@ export function forecast(series, stock, asOf, horizon = 2, unit = 'butir', train
       else modelStatus={status:'not_qualified',reason:'Model belum mengalahkan kedua baseline; baseline tetap dipakai.'};
     }catch{modelStatus={status:'unavailable',reason:'Artefak model tidak valid; baseline tetap dipakai.'};}
   }
+  if(globalModel && modelStatus.status!=='active' && horizon===2){
+    const local=evaluateLocalKulakan(completed,asOf,globalModel);
+    if(local.status==='active'){
+      predicted=local.predicted;spread=local.localMetrics.model.mae;method='kulakan_sales_hgb';
+      modelStatus={...local,source:'public_retail_with_local_backtest'};delete modelStatus.predicted;
+    }else modelStatus={...modelStatus,globalCandidate:local};
+  }
   const amount = round(predicted - stock);
   // Days of stock left at the same daily rate the forecast implies; null when there is no recorded usage to divide by.
   const perDay = predicted / horizon, dailyUsage = round(perDay), daysRemaining = perDay > 0 ? Math.floor(Math.max(0, stock) / perDay) : null;
   return { method, predicted: round(predicted), amount, low: round(predicted - spread - stock), high: round(predicted + spread - stock), horizon, dailyUsage, daysRemaining,
-    confidence: method==='ridge_two_day'?'model terlatih · evaluasi internal':history.length < 14 ? 'rendah · histori terbatas' : 'berdasarkan histori pencatatan', metrics,trainedModel:modelStatus,historyQuality,
+    confidence: method==='kulakan_sales_hgb'?'model publik · lolos backtest lokal':method==='ridge_two_day'?'model terlatih · evaluasi internal':history.length < 14 ? 'rendah · histori terbatas' : 'berdasarkan histori pencatatan', metrics,trainedModel:modelStatus,historyQuality,
     observations: history.length, dataFrom: history[0]?.date || null, dataTo: history.at(-1)?.date || null,
-    asOf, stock, incoming: 0, safetyStock: 0, spreadMethod: method==='ridge_two_day'?'MAE validasi target dua hari; rentang heuristik, bukan interval terkalibrasi':'MAE backtesting × horizon; rentang heuristik, bukan interval terkalibrasi', dataset: 'pencatatan-usaha' };
+    asOf, stock, incoming: 0, safetyStock: 0, spreadMethod: method==='kulakan_sales_hgb'?'MAE backtest lokal target dua hari; rentang heuristik, bukan interval terkalibrasi':method==='ridge_two_day'?'MAE validasi target dua hari; rentang heuristik, bukan interval terkalibrasi':'MAE backtesting × horizon; rentang heuristik, bukan interval terkalibrasi', dataset: 'pencatatan-usaha' };
 }

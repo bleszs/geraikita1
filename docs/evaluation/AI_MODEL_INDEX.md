@@ -1,3 +1,9 @@
+# Model kulakan sales-only — 18 Oktober 2026
+
+Ada satu artefak boosting baru yang benar-benar dilatih: [160 pohon portable](../../server/ml/artifacts/kulakan-sales-v1.json). Run `2026-10-18T03-35-01Z-18239ce0`: 500 seri, 19.000 target; test 200 toko / 600 target, WAPE 25,68% vs MA7 27,41%, MAE turun 6,30%. Jalur global memakai backtest lokal 42 tanggal sebelum boleh dipakai untuk bahan usaha. Contoh publik nyata tampil di Saran kulakan tanpa mengisi data akun.
+
+Ini menambah satu model boosting yang dipublikasikan di luar dua eksperimen boosting sebelumnya; 504 artefak Ridge tetap. Bukan fine-tuning Qwen/Whisper dan bukan model yang sudah dilatih dari UMKM pengguna. Skor transfer UCI yang gagal tetap dicatat. [Cara kerja dan batas klaim](../KULAKAN_MODEL.md), [hasil](kulakan-model-results.json), [verifikasi](kulakan-model-verification.json). Catatan di bawah adalah riwayat.
+
 # Integrasi runtime v0.50
 
 Sinkronisasi `rahasiagelap3.0` mempertahankan seluruh model dan artefak pelatihan sebelumnya. Kasir baru memakai kontrak ekstraksi katalog/kuota yang sama; tidak ada fine-tuning, bobot baru atau skor akurasi lapangan baru. Delapan pemeriksaan Qwen 1.5B/Whisper Tiny asli lulus secara lokal pada SQLite memori. [Bukti runtime](branch-sync-v50-runtime.json) dan [rincian integrasi](../BRANCH_SYNC_V50.md). Catatan versi berikut merupakan riwayat.

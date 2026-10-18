@@ -25,7 +25,7 @@ test('registration and login have no welcome tutorial or automatic overlay',asyn
 });
 
 test('a newly registered account autoplays each page guide once and keeps help only in the top navbar',async({page})=>{
-  await page.goto('/');await page.getByLabel('Nama usaha',{exact:true}).fill('Usaha onboarding baru');await page.getByLabel('Nama kelompok',{exact:true}).fill('Kelompok onboarding');
+  await page.goto('/');await page.getByLabel('Nama usaha',{exact:true}).fill('Usaha onboarding baru');
   await page.getByLabel('Email',{exact:true}).fill(crypto.randomUUID()+'@example.test');await page.getByLabel('Kata sandi',{exact:true}).fill('Browser-guide-only-456');
   await page.getByRole('button',{name:'Daftarkan usaha',exact:true}).click();
   await expect(tour(page)).toContainText('Masukkan pesanan yang benar-benar diterima');
@@ -110,7 +110,7 @@ test('offline shell includes guides and progress from one account is not resumed
 
 test('blocked guide storage still allows starting, advancing and skipping with a recovery message',async({page})=>{
   await page.addInitScript(()=>{const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key.startsWith('gerai-kita-guide-'))throw new DOMException('denied','SecurityError');return original.call(this,key,value);};});
-  await page.goto('/');await welcome(page).getByRole('button',{name:'Mulai panduan',exact:true}).click();
+  await page.goto('/#panduan');await page.locator('[data-guide-result=akun] button').click();
   await expect(page.locator('#toast')).toContainText('belum bisa menyimpan posisi panduan');await tour(page).getByRole('button',{name:'Lanjut',exact:true}).click();
   await tour(page).getByRole('button',{name:'Lewati panduan'}).click();await expect(welcome(page)).toHaveCount(0);await expect(tour(page)).toHaveCount(0);
 });

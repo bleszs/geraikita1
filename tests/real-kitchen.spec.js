@@ -88,7 +88,7 @@ test('station waiting limit persists and a conflicting second station preserves 
   if(dark)await page.getByRole('button',{name:'Ubah tema',exact:true}).click();
   await page.evaluate(async()=>{document.activeElement?.blur();scrollTo(0,0);await document.fonts.ready;});await page.mouse.move(width-1,1);
   await page.screenshot({path:'.impeccable/review/'+name+'.png',fullPage:true,animations:'disabled'});
-  const box=await page.locator('.kitchen-capacity').boundingBox();await page.screenshot({path:'.impeccable/review/'+name+'-panel.png',clip:box,animations:'disabled'});
+  await page.locator('.kitchen-capacity').screenshot({path:'.impeccable/review/'+name+'-panel.png',animations:'disabled'});
  };
  await capture('aging-conflict-desktop',1440);await capture('aging-conflict-mobile-dark',320,true);
  await second.getByRole('button',{name:'Muat pengaturan terbaru '+station,exact:true}).click();

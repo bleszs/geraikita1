@@ -12,6 +12,7 @@ import { createExtractor,parseOrder } from './extractor.mjs';
 import {createPlans} from './plans.mjs';
 import {localTranscriber,MAX_AUDIO_BODY} from './transcriber.mjs';
 import { ApiError, requireValue } from './common.mjs';
+import {loadKulakanModel} from './ml/kulakan-model.mjs';
 const root = path.resolve(fileURLToPath(new URL('../public/', import.meta.url)));
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2', '.json': 'application/json; charset=utf-8' };
 async function readBody(request, limit=65536) {
@@ -94,7 +95,10 @@ export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-
         const body=mutating ? await readBody(request,pathname==='/api/transcriptions'?MAX_AUDIO_BODY:65536) : null;
         // A role/session may be revoked while a request body is still arriving.
         session=identity.resolve(cookie);
-        if(pathname==='/api/health' && request.method==='GET')return json({storage:'sqlite',mode:'live',ai:await extractor.status(),speech:await transcriber.status()});
+        if(pathname==='/api/health' && request.method==='GET'){
+          const model=loadKulakanModel();
+          return json({storage:'sqlite',mode:'live',ai:await extractor.status(),speech:await transcriber.status(),forecast:{available:!!model,kind:model?.kind??null,runId:model?.runId??null,publicBenchmarkQualified:model?.evaluation?.qualified??false}});
+        }
         if(['/api/auth/register','/api/auth/login'].includes(pathname) && mutating){
           requireValue(!session,'Keluar dari akun aktif sebelum masuk dengan akun lain.',409);
           const key=deployment.clientAddress(request)+':'+String(body.email || '').trim().toLowerCase();const failed=failures.get(key);
@@ -167,6 +171,8 @@ export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-
         if(pathname==='/api/account/plan'&&request.method==='GET')return json(plans.snapshot(session));
         if(pathname==='/api/account/plan-interest'&&mutating)return json(plans.interest(session,body));
         if(pathname==='/api/account/profile' && mutating)return json(identity.saveBusiness(session,body));
+        if(pathname==='/api/community/create' && mutating)return json(identity.createCommunity(session,body));
+        if(pathname==='/api/community/join' && mutating)return json(identity.joinCommunity(session,body));
         if(pathname==='/api/community/settings' && mutating)return json(identity.saveCommunity(session,body));
         if(pathname==='/api/community/invite' && mutating)return json(identity.rotateInvite(session,body));
         if(pathname==='/api/account/password' && mutating){

@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-18",
+  "deploymentId": "add96e94-cbae-415f-8911-a6fbf06568db",
+  "status": "SUCCESS",
+  "public": {
+    "url": "https://web-production-a3e13.up.railway.app",
+    "files": [
+      {
+        "file": "public/app.js",
+        "matchesLocal": true,
+        "status": 200
+      },
+      {
+        "file": "public/live-views.js",
+        "matchesLocal": true,
+        "status": 200
+      },
+      {
+        "file": "public/staff-workspace.js",
+        "matchesLocal": true,
+        "status": 200
+      },
+      {
+        "file": "public/styles.css",
+        "matchesLocal": true,
+        "status": 200
+      },
+      {
+        "file": "public/guide-content.js",
+        "matchesLocal": true,
+        "status": 200
+      },
+      {
+        "file": "public/index.html",
+        "matchesLocal": true,
+        "status": 200
+      },
+      {
+        "file": "public/sw.js",
+        "matchesLocal": true,
+        "status": 200
+      }
+    ],
+    "productionWrites": false,
+    "health": {
+      "speechAvailable": true,
+      "speechModel": "whisper-base",
+      "speechProfile": "base-orders",
+      "aiAvailable": true,
+      "aiModel": "qwen2.5:1.5b"
+    },
+    "passed": true
+  },
+  "data": {
+    "tablesCompared": 37,
+    "allOriginalRowsUnchanged": false,
+    "integrity": "ok",
+    "foreignKeyErrors": 0,
+    "productionRestorePerformed": false,
+    "productionFixturesCreated": false,
+    "oldSalesRetained": true,
+    "oldSalesRowsUnchanged": true,
+    "inventoryChangesReconciledWithNewMovements": true,
+    "newSalesDuringBackupWindow": 2,
+    "newKitchenOrdersDuringBackupWindow": 2,
+    "newSimulatedWithdrawalsDuringBackupWindow": 1,
+    "note": "Production activity occurred during the backup interval; do not claim byte-for-byte or row-for-row equality. Automated verification writes remained isolated in memory."
+  },
+  "verification": {
+    "nodePassed": 19,
+    "uniqueBrowserCases": 32,
+    "initialBrowserRun": {
+      "passed": 31,
+      "failed": 1,
+      "reason": "New test included the hidden guide link in its sidebar order assertion."
+    },
+    "correctedBrowserRun": {
+      "passed": 2,
+      "failed": 0,
+      "exitCode": 0
+    },
+    "afterCssCorrectionBrowserRun": {
+      "passed": 2,
+      "failed": 0,
+      "exitCode": 0
+    },
+    "paymentMethodsVerified": [
+      "tunai",
+      "qris",
+      "transfer",
+      "ewallet"
+    ],
+    "feeChargedAtSale": true,
+    "noSecondFeeAtWithdrawal": true,
+    "testsUseMemoryDatabase": true
+  },
+  "newCommitsCreated": false,
+  "pushed": false,
+  "limitations": [
+    "QRIS is payment-method recording; no merchant QR or provider confirmation integration.",
+    "Withdrawals are simulated; no bank or wallet transfer."
+  ]
+}

@@ -1,4 +1,53 @@
-# Pembaruan main dan Railway — 18 Oktober 2026
+# HCI kasir/dapur dan prediksi langsung — 18 Oktober 2026
+
+- [x] Utamakan antrean dan input kasir; rincian saldo dilipat, seluruh metode pembayaran dipertahankan.
+- [x] Tambahkan filter status dengan jumlah, dahulukan pesanan siap di kasir dan pertahankan giliran server pada dapur.
+- [x] Pertahankan isian, filter dan panel saat pembaruan; perbaiki fokus keyboard, Tab dialog pembayaran dan Escape.
+- [x] Saran kulakan menampilkan prediksi dua hari, stok tersedia dan jumlah beli secara langsung. Bukti model dan pemeriksaan pemakaian berada dalam rincian.
+- [x] Model tetap memakai bobot terlatih dan evaluasi lokal; tidak menambah histori usaha buatan atau mengubah aturan stok/pembayaran.
+- [x] Konfirmasi visual/alur selesai; 325 tes backend lulus dan kasus browser yang berubah dikonfirmasi. Railway f7fcf807-370b-4b0e-b678-434224e26f03 SUCCESS, sembilan file publik + modul staf API cocok. [Bukti](evaluation/hci-cloud-release.json).
+- [ ] Uji kegunaan dengan kasir/koki sungguhan untuk mengukur salah tekan dan waktu tugas.
+
+[Alur dan penerapan HCI](HCI_OPERATIONS.md). Catatan di bawah adalah riwayat.
+
+# Model kulakan terlatih — 18 Oktober 2026
+
+- [x] Latih model sales-only HistGradientBoosting: 500 seri, 19.000 target dua hari; pilih delapan kandidat lewat validasi.
+- [x] Uji 200 toko di luar development/v2, 600 target: WAPE 25,68% vs MA7 27,41%; MAE turun 6,30%. Batas domain/periode dan penggunaan ulang holdout setelah perbaikan ekspor dicatat.
+- [x] Ekspor 160 pohon ke Node; 600 prediksi cocok dengan Python; metrik dihitung ulang dari sumber mentah tanpa fit ulang.
+- [x] Hubungkan kandidat model ke saran bahan melalui backtest lokal 42 tanggal; model khusus usaha tetap didahulukan. Tanpa histori tetap tidak ada angka buatan.
+- [x] Sediakan contoh publik yang bisa ditelusuri di Saran kulakan, terpisah dari stok dan transaksi akun.
+- [x] 325 tes backend lulus; tur dan model browser dikonfirmasi setelah koreksi penunjuk. Railway 8b9e4ac2 SUCCESS, bobot dan lima file publik cocok, inferensi cloud serta akun kosong memori terverifikasi. [Bukti](evaluation/kulakan-cloud-release.json).
+- [ ] Kumpulkan histori UMKM Indonesia yang sah untuk evaluasi maju dan pembuktian manfaat usaha.
+- [ ] Lengkapi pencatatan hari tutup/nol dan perencanaan kebutuhan awal dari target produksi; ini tidak diselesaikan oleh model publik.
+
+[Model, hasil, cara presentasi dan batas](KULAKAN_MODEL.md). Catatan di bawah adalah riwayat.
+
+# Dasbor dan akses pembayaran - 18 Oktober 2026
+
+- [x] Ubah label Ringkasan menjadi Dasbor; letakkan Operasional dapur dan Layar layanan tepat setelah Daftar staf, dengan tautan lama tetap kompatibel.
+- [x] Keuangan menampilkan Tarik saldo pemilik termasuk pada saldo nol, dengan kontrol nonaktif dan alasan. Jelaskan potongan 10% saat penjualan dan tanpa potongan kedua saat penarikan.
+- [x] Perjelas jalur pembayaran kasir dan uji Tunai, QRIS, Transfer Bank, E-Wallet. Hapus gambar QR palsu; QRIS resmi dan penarikan bank nyata belum terintegrasi.
+- [x] Pisahkan angka kotor/biaya/bersih agar tidak bertumpuk; jumlah yang sudah ditarik tetap terlihat pada ponsel.
+- [x] 19 tes Node serta 32 kasus browser relevan terverifikasi; pemeriksaan visual desktop/ponsel/gelap selesai. [Review dan rincian run](evaluation/PAYMENT_NAVIGATION_REVIEW.md).
+- [x] Deployment Railway add96e94 berhasil; tujuh file publik cocok dengan lokal. Backup 37 tabel valid; ada aktivitas produksi selama interval, sehingga tidak diklaim identik. Penjualan lama tetap utuh dan perubahan stok cocok dengan ledger; tanpa commit/push. [Bukti](evaluation/payment-navigation-release.json).
+
+[Letak fitur dan batas pembayaran](PAYMENT_NAVIGATION.md). Catatan di bawah adalah riwayat pekerjaan sebelumnya.
+
+# Pendaftaran, kelompok dan ekspor — 18 Oktober 2026
+
+- [x] Hilangkan pilihan kelompok dari formulir daftar; akun mandiri dapat membuat atau bergabung melalui Beli bersama. Kelompok dan kode lama tetap berlaku.
+- [x] Perpindahan atomik mempertahankan katalog, stok, transaksi, pemakaian dan kuota. Bahan bernama/satuan sama diselaraskan; satuan berbeda ditolak. Izin berbagi direset, sesi lain dan tautan layar lama dicabut.
+- [x] Rapikan undangan, tombol perintah dapur, formulir pemasok ponsel dan logo GK dari referensi pengguna. Favicon, ikon terpasang dan struk menggunakan identitas yang sama.
+- [x] CSV mempunyai pemisah Excel, UTF-8, desimal Indonesia dan kolom penjualan yang mudah dibaca. Tidak mengubah tarif atau simulasi pembayaran teman.
+- [x] Perbaiki tes panduan tamu yang masih mengharapkan banner yang sudah dihapus, serta capture panel yang memakai koordinat di luar viewport.
+- [x] Regresi 317 backend + 70 browser lulus. Railway diperbarui tanpa commit/push: 12 hash file publik cocok, HTTP Base/Qwen dan join diuji di database memori, 36 tabel lama tetap identik; tabel penarikan ditambahkan secara aditif. [Bukti deployment](evaluation/community-deployment.json).
+- [ ] Uji mikrofon fisik dan ketepatan menu/jumlah pada rekaman pesanan berizin. Runtime Base/Qwen aktif bukan bukti akurasi domain.
+- [ ] Kumpulkan histori pemakaian usaha nyata untuk prediksi/pelatihan; audit cloud 18 Oktober menemukan empat bahan tanpa histori, nol baseline siap dan nol model usaha aktif.
+
+[Perubahan dan batas](COMMUNITY_AND_EXPORTS.md). [Status operasional](RAILWAY_MAIN_STATUS.md). Catatan di bawah merupakan arsip status sebelumnya; Qwen kini terhubung melalui endpoint eksternal dan voice memakai Whisper Base.
+
+# Arsip pembaruan main dan Railway — 18 Oktober 2026
 
 - [x] Audit semua head branch `origin`; seluruhnya tercakup di `29565e6`. Main di-fast-forward dan di-push tanpa commit baru; penghapusan Surplus dipertahankan.
 - [x] Deploy main ke Railway dan cocokkan hash empat modul frontend. HTTPS, pembatasan akses tamu, prasyarat browser voice dan backup/restore terpisah diperiksa. Migrasi cloud 30 → 36 tabel berhasil; cloud awal masih kosong, tanpa fixture produksi.

@@ -8,6 +8,7 @@ import { createSurplus } from './surplus.mjs';
 import {createConfiguration} from './configuration.mjs';
 import { requireValue, dayAt, units, quantity, PAYMENT_METHODS, applicationFee } from './common.mjs';
 import { forecast } from './forecast.mjs';
+import {loadKulakanModel,kulakanModelSummary} from './ml/kulakan-model.mjs';
 import { optimize } from './optimizer.mjs';
 import {createForecastRegistry} from './forecast-registry.mjs';
 import {screenUsage} from './ml/usage-anomalies.mjs';
@@ -48,6 +49,8 @@ export function createService(store) {
     const catalog=store.ingredients(s);
     const row=get('SELECT * FROM businesses WHERE workspace_id=? AND id=?',...scope(s));
     const business={id:row.id,name:row.name,shortName:row.short_name,letter:row.letter};
+    const workspace = get('SELECT * FROM workspaces WHERE id=?', s.workspace_id);
+    const syntheticForecast=JSON.parse(workspace.settings||'{}').forecastDataSource==='synthetic_demo'||row.name.startsWith('[DEMO]');
     const businessState = get('SELECT * FROM business_state WHERE workspace_id=? AND business_id=?', ...scope(s));
     const stock = Object.fromEntries(all('SELECT * FROM inventory WHERE workspace_id=? AND business_id=?', ...scope(s)).map(i => [i.product_id, quantity(i.quantity)]));
     const availableStock = Object.fromEntries(catalog.map(p => [p.id, quantity(operations.available(s, p.id))]));
@@ -57,7 +60,7 @@ export function createService(store) {
       const history = all('SELECT date,quantity FROM daily_usage WHERE workspace_id=? AND business_id=? AND product_id=? ORDER BY date', ...scope(s), p.id)
         .map(i => ({ date: i.date, qty: quantity(i.quantity) }));
       return { productId: p.id, ...forecast(history, availableStock[p.id], asOf, 2, p.unit,
-        models.get({workspaceId:s.workspace_id,businessId:s.business_id,productId:p.id,unit:p.unit})),
+        models.get({workspaceId:s.workspace_id,businessId:s.business_id,productId:p.id,unit:p.unit}),syntheticForecast?null:loadKulakanModel()),
         usageScreening: screenUsage(history, {asOf, unit:p.unit}),
         driftScreening: screenDrift(history, {asOf, unit:p.unit}) };
     });
@@ -67,9 +70,8 @@ export function createService(store) {
     const audit = all('SELECT message,created_at,actor_id,actor_name,actor_role,actor_revision FROM audit WHERE workspace_id=? AND business_id=? ORDER BY rowid DESC LIMIT 100', ...scope(s)).map(a => ({ ...a, actor:a.actor_id?{id:a.actor_id,name:a.actor_name,role:a.actor_role,revision:a.actor_revision}:null, time: new Date(a.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) }));
     const stockReceipts = all('SELECT * FROM stock_receipts WHERE workspace_id=? AND business_id=? ORDER BY created_at DESC', ...scope(s)).map(r => ({ ...r, qty: quantity(r.quantity) }));
     const movements = all('SELECT product_id,delta,reason,ref,created_at FROM movements WHERE workspace_id=? AND business_id=? ORDER BY rowid DESC LIMIT 100', ...scope(s)).map(m => ({ ...m, qty: quantity(m.delta) }));
-    const workspace = get('SELECT * FROM workspaces WHERE id=?', s.workspace_id);
     const sharedProduct=JSON.parse(workspace.settings || '{}').product || null;
-    return { kitchen:kitchen.snapshot(s), mode: 'live', workspaceId: s.workspace_id, workspaceEpoch: workspace.created_at, business, community:{name:workspace.name,canManage:workspace.owner_business_id===s.business_id,inviteCode:workspace.owner_business_id===s.business_id ? workspace.join_code : null}, sharedProduct, catalog, menu: store.menus(s), catalogRevision: businessState.catalog_revision, stock, availableStock, stockReceipts, movements, transactions, recommendations, usageReviews:usageDecisions.list(s,recommendations), demand: ownDemand.qty || recommendations.find(r=>r.productId===sharedProduct?.id)?.amount || null, shared: !!ownDemand.active && ownDemand.expires_at > Date.now(), needsReview: !cycles.locked(s) && ownDemand.stock_revision !== businessState.stock_revision, budget: ownDemand.budget, group: group(s), collectiveHistory:cycles.history(s), offers, transfers, audit, finance: finance(s), date: dayAt(), csrf: s.csrf };
+    return { kulakanModel:kulakanModelSummary(), kitchen:kitchen.snapshot(s), mode: 'live', workspaceId: s.workspace_id, workspaceEpoch: workspace.created_at, business, community:{enabled:JSON.parse(workspace.settings||'{}').communityEnabled!==false,name:JSON.parse(workspace.settings||'{}').communityEnabled!==false?workspace.name:'Belum bergabung kelompok',canManage:workspace.owner_business_id===s.business_id,inviteCode:JSON.parse(workspace.settings||'{}').communityEnabled!==false&&workspace.owner_business_id===s.business_id ? workspace.join_code : null}, sharedProduct, catalog, menu: store.menus(s), catalogRevision: businessState.catalog_revision, stock, availableStock, stockReceipts, movements, transactions, recommendations, usageReviews:usageDecisions.list(s,recommendations), demand: ownDemand.qty || recommendations.find(r=>r.productId===sharedProduct?.id)?.amount || null, shared: !!ownDemand.active && ownDemand.expires_at > Date.now(), needsReview: !cycles.locked(s) && ownDemand.stock_revision !== businessState.stock_revision, budget: ownDemand.budget, group: group(s), collectiveHistory:cycles.history(s), offers, transfers, audit, finance: finance(s), date: dayAt(), csrf: s.csrf };
   }
   function transaction(s, body) {
     requireValue(typeof body.idempotencyKey === 'string' && body.idempotencyKey.length >= 8 && body.idempotencyKey.length <= 100, 'Kunci transaksi tidak valid.');

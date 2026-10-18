@@ -62,6 +62,7 @@ export function buildPresentationDemo(directory) {
   const store = createStore(filename), service = createService(store), identity = createIdentity(store), asOf = dayAt(), start = addDays(asOf, -84);
   try {
     const owner = at(start, 7, () => identity.register({ ...DEMO_ACCOUNT, communityName: '[DEMO] Kelompok Kulakan Dapur' }));
+    store.run("UPDATE workspaces SET settings=json_set(settings,'$.forecastDataSource','synthetic_demo') WHERE id=?",owner.workspace_id);
     const peers = [simulatedMember(store, owner.workspace_id, '[SIMULASI] Warung Pak Budi'), simulatedMember(store, owner.workspace_id, '[SIMULASI] Dapur Mbak Rina')];
     const actors = [owner, ...peers], ingredients = {};
     const definitions = [

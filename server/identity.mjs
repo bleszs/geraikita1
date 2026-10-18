@@ -3,6 +3,7 @@ import {requireValue} from './common.mjs';
 import {createStaffInvites} from './staff-invites.mjs';
 import {createAccountRecovery,remainingRecoveryCodes} from './account-recovery.mjs';
 import {createStaffAccess} from './staff-access.mjs';
+import {createCommunityMembership,communityCode,communityEnabled} from './community-membership.mjs';
 
 export function createIdentity(store) {
   const {get,run,atomic}=store;
@@ -18,14 +19,15 @@ export function createIdentity(store) {
     const email=credentials(body);
     requireValue(typeof body.businessName==='string' && body.businessName.trim().length>=2 && body.businessName.trim().length<=60,'Nama usaha harus 2–60 karakter.');
     const joining=typeof body.inviteCode==='string' && !!body.inviteCode.trim();
-    requireValue(joining || (typeof body.communityName==='string' && body.communityName.trim().length>=2 && body.communityName.trim().length<=80),'Isi nama kelompok atau kode bergabung.');
+    const hasCommunity=typeof body.communityName==='string'&&!!body.communityName.trim();
+    requireValue(!hasCommunity||(body.communityName.trim().length>=2&&body.communityName.trim().length<=80),'Nama kelompok harus 2–80 karakter.');
     const salt=randomBytes(16).toString('hex'),hash=scryptSync(body.password,salt,64).toString('hex');
     return atomic(()=>{
       requireValue(!get('SELECT id FROM accounts WHERE email=?',email),'Email sudah terdaftar. Masuk dengan akunmu.',409);
       let workspace=joining && get('SELECT * FROM workspaces WHERE join_code=?',body.inviteCode.trim());
-      requireValue(!joining || workspace,'Kode kelompok tidak ditemukan.',404);
+      requireValue(!joining || (workspace&&communityEnabled(workspace)),'Kode kelompok tidak ditemukan.',404);
       const business=randomUUID(),now=new Date().toISOString();
-      if(!joining){const id=randomUUID();run('INSERT INTO workspaces(id,version,quote_expires,created_at,active_cycle,name,join_code,owner_business_id,settings) VALUES(?,1,0,?,1,?,?,?,?)',id,now,body.communityName.trim(),randomBytes(12).toString('hex'),business,'{}');run("INSERT INTO collective_cycles VALUES(?,1,'planning',?,NULL)",id,now);workspace=get('SELECT * FROM workspaces WHERE id=?',id);}
+      if(!joining){const id=randomUUID();run('INSERT INTO workspaces(id,version,quote_expires,created_at,active_cycle,name,join_code,owner_business_id,settings) VALUES(?,1,0,?,1,?,?,?,?)',id,now,hasCommunity?body.communityName.trim():body.businessName.trim(),hasCommunity?communityCode():null,business,JSON.stringify({communityEnabled:hasCommunity}));run("INSERT INTO collective_cycles VALUES(?,1,'planning',?,NULL)",id,now);workspace=get('SELECT * FROM workspaces WHERE id=?',id);}
       const name=body.businessName.trim();run('INSERT INTO businesses VALUES(?,?,?,?,?)',workspace.id,business,name,name,Array.from(name)[0].toUpperCase());
       run('INSERT INTO business_state VALUES(?,?,1,0)',workspace.id,business);
       run("INSERT INTO demands(workspace_id,business_id,qty,active,budget,expires_at,approved_version,decision,stock_revision) VALUES(?,?,0,0,NULL,0,NULL,'pending',0)",workspace.id,business);
@@ -33,7 +35,7 @@ export function createIdentity(store) {
       if(product){run('INSERT INTO ingredients VALUES(?,?,?,?,?,?,0,?,1)',workspace.id,business,product.id,product.name,product.name.normalize('NFKC').toLowerCase(),product.unit,'');run('INSERT INTO inventory VALUES(?,?,?,?,NULL)',workspace.id,business,product.id,0);}
       const account={id:randomUUID(),workspace_id:workspace.id,business_id:business};run('INSERT INTO accounts VALUES(?,?,?,?,?,?,?)',account.id,email,hash,salt,workspace.id,business,now);
       run("INSERT INTO account_roles(account_id,workspace_id,business_id,role,name) VALUES(?,?,?,'owner','Pemilik usaha')",account.id,workspace.id,business);
-      store.withActor({...account,account_id:account.id},()=>store.log(workspace.id,business,joining ? 'Usaha bergabung ke kelompok dengan kode undangan.' : 'Usaha dan kelompok dibuat oleh pemilik.'));
+      store.withActor({...account,account_id:account.id},()=>store.log(workspace.id,business,joining ? 'Usaha bergabung ke kelompok dengan kode undangan.' : hasCommunity ? 'Usaha dan kelompok dibuat oleh pemilik.' : 'Akun usaha mandiri dibuat. Kelompok dapat dipilih melalui Beli bersama.'));
       return issue(account);
     });
   }
@@ -118,5 +120,5 @@ export function createIdentity(store) {
   }
   const legacyInvites=createStaffInvites(store,{owner,account,issue}),access=createStaffAccess(store,{owner,account,issue});
   function loginStaffCode(body){return access.loginStaffAccess(body)||legacyInvites.loginStaffCode(body);}
-  return store.attribute({register,login,resolve,details,staff,createStaff,updateStaff,saveBusiness,changePassword,saveCommunity,rotateInvite,...legacyInvites,...access,loginStaffCode,...createAccountRecovery(store,{account,owner,issue,emailOf})});
+  return store.attribute({...createCommunityMembership(store,{owner}),register,login,resolve,details,staff,createStaff,updateStaff,saveBusiness,changePassword,saveCommunity,rotateInvite,...legacyInvites,...access,loginStaffCode,...createAccountRecovery(store,{account,owner,issue,emailOf})});
 }

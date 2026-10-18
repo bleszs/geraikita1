@@ -5,6 +5,8 @@ import { spawnSync } from 'node:child_process';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const python = fileURLToPath(new URL(process.platform === 'win32' ? '../.venv-ml/Scripts/python.exe' : '../.venv-ml/bin/python', import.meta.url));
 const commands = {
+  kulakan: ['scripts/train-kulakan.py'],
+  'verify-kulakan': ['scripts/verify-kulakan-training.py'],
   benchmark: ['scripts/benchmark-pooled.py'],
   verify: ['scripts/verify-pooled.py'],
   test: ['-m', 'unittest', 'discover', '-s', 'tests', '-p', 'test_pooled_forecast.py'],

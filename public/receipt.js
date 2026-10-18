@@ -7,7 +7,7 @@ export function receiptHTML(sale, e) {
   const items = (sale.items || []).map(i => `<tr><td>${i.qty} ${e(i.name)}<small>@ ${rp(i.unitPrice)}</small></td><td>${rp((i.unitPrice || 0) * i.qty)}</td></tr>`).join('');
   const fee = sale.fee != null ? sale.fee : 0;
   return `<div class="receipt" id="receipt-print">
-    <div class="receipt-head"><span class="receipt-mark">🧾</span><strong>${e(sale.businessName || 'Gerai Kita')}</strong><span class="small muted">Struk pembayaran</span></div>
+    <div class="receipt-head"><img class="receipt-logo" src="/assets/logo.svg" width="66" height="52" alt="Gerai Kita"><strong>${e(sale.businessName || 'Gerai Kita')}</strong><span class="small muted">Struk pembayaran</span></div>
     <div class="receipt-meta"><span>${when.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</span><span>Kode #${e(String(sale.id || '').slice(0, 8).toUpperCase())}</span>${sale.label ? `<span>${e(sale.label)}</span>` : ''}${sale.cashier ? `<span>Kasir: ${e(sale.cashier)}</span>` : ''}</div>
     <table class="receipt-items"><tbody>${items}</tbody></table>
     <div class="receipt-total"><span>Total</span><strong>${rp(sale.total)}</strong></div>

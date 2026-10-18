@@ -1,0 +1,22 @@
+{
+  "runId": "2026-10-18T03-35-01Z-18239ce0",
+  "deploymentId": "8b9e4ac2-8939-43ba-a136-da99d2abc83c",
+  "backend": {
+    "passed": 325,
+    "failed": 0
+  },
+  "browser": {
+    "initialPassed": 12,
+    "initialFailed": 1,
+    "failure": "Introduction guide arrow pointed below viewport after insertion of model panel",
+    "correction": "Point introduction at visible page title",
+    "confirmationPassed": 2,
+    "confirmationFailed": 0
+  },
+  "pythonNodeParityRows": 600,
+  "productionFixturesCreated": false,
+  "commitCreated": false,
+  "pushPerformed": false,
+  "designCanonChanged": false,
+  "publicFileHashesMatched": 5
+}

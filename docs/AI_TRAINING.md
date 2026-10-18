@@ -1,3 +1,7 @@
+# Pembaruan model kulakan — 18 Oktober 2026
+
+Model baru sales-only HistGradientBoosting telah dilatih dan diekspor untuk inferensi Node: `npm run train:kulakan`, `npm run verify:kulakan`, `npm run test:kulakan`. [Bobot, data, evaluasi, integrasi dan cara presentasi](KULAKAN_MODEL.md). Data publik tetap terpisah dari histori usaha; aktivasi kandidat pada bahan mensyaratkan backtest lokal. Pedoman dan catatan sebelumnya berikut tetap berlaku untuk model Ridge khusus usaha serta eksperimen lama.
+
 # Pelatihan forecasting Gerai Kita
 
 Untuk pertanyaan “semua AI harus dilatih ulang?”, lihat [keputusan per model](AI_TRAINING_DECISIONS.md). Qwen/Whisper aplikasi masih pralatih; panduan ini membahas fitting dan evaluasi **ramalan**, bukan fine-tuning model bahasa/suara.

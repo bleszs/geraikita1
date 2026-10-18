@@ -1,3 +1,19 @@
+# Tampilan operasional dan saran kulakan
+
+Kasir dan dapur kini mempunyai filter status berjumlah, tindakan utama yang lebih jelas dan tampilan ponsel yang ringkas. Saldo kasir tersedia dalam rincian. Saran kulakan langsung menampilkan prediksi pemakaian dua hari, stok tersedia dan saran jumlah beli; sumber model serta pemeriksaan pemakaian dibuka saat diperlukan. [Alur dan penerapan HCI](docs/HCI_OPERATIONS.md).
+
+Pembaruan aktif di [Railway](https://web-production-a3e13.up.railway.app). Tanpa commit/push otomatis. Bagian berikut menyimpan riwayat versi.
+
+# Model kulakan terlatih sudah aktif
+
+Buka **Saran kulakan → Model prediksi kulakan → Lihat hasil uji dan contoh prediksi nyata** di [Railway](https://web-production-a3e13.up.railway.app). Model sales-only dilatih dari 500 seri publik / 19.000 target dua hari; test 200 toko / 600 target menghasilkan WAPE 25,68% vs MA7 27,41%. Contoh publik dihitung oleh server dan terpisah dari data akun. Saran bahan memakai model setelah lolos backtest lokal 42 tanggal tercatat. [Bobot, hasil, cara presentasi dan batas](docs/KULAKAN_MODEL.md).
+
+Deployment `8b9e4ac2-8939-43ba-a136-da99d2abc83c` berhasil; model kulakan, Qwen 1.5B lewat endpoint eksternal dan Whisper Base tersedia saat verifikasi. [Bukti](docs/evaluation/kulakan-cloud-release.json). Tidak ada commit/push otomatis. Untuk lokal, mulai ulang server dengan `npm run dev` setelah pembaruan agar modul model baru dimuat. Bagian versi lama di bawah adalah riwayat.
+
+# Pembaruan pendaftaran dan Beli bersama
+
+Daftar dengan nama usaha, email dan kata sandi. Setelah masuk, buka **Beli bersama** untuk membuat kelompok atau memakai kode undangan. [Rincian keanggotaan, ekspor Excel dan logo](docs/COMMUNITY_AND_EXPORTS.md). [Status Railway dan AI terbaru](docs/RAILWAY_MAIN_STATUS.md).
+
 # Gerai Kita — paket berdasarkan kebutuhan dan AI pesanan dapur
 
 Status cloud terbaru: [Gerai Kita di Railway](https://web-production-a3e13.up.railway.app) menjalankan `main` (`29565e6`) dengan voice Whisper aktif. Qwen/Ollama cloud masih menunggu kapasitas; Qwen 1.5B di laptop aktif. [Status layanan, akun dan bukti](docs/RAILWAY_MAIN_STATUS.md). Akun/data lokal tidak otomatis disalin ke cloud.
@@ -205,4 +221,4 @@ PWA menyimpan shell, snapshot berwaktu, draft manual dan rincian tindakan tertun
 
 [Panduan penggunaan](docs/USER_FLOWS.md), [persiapan final](docs/FINAL_DEMO.md), [arsitektur](docs/ARCHITECTURE.md), [offline](docs/OFFLINE.md), dan [laporan data aktif](docs/evaluation/live-evaluation.json).
 
-Ini aplikasi lokal yang belum dipublikasikan. Pemesanan pemasok, pembayaran, pemulihan kata sandi dan verifikasi email belum diimplementasikan. Input suara lokal tersedia dengan koreksi/review manusia dan belum tervalidasi pada ucapan pemilik usaha. Persetujuan hanya menyimpan rencana internal. Dokumen dan hasil evaluasi versi demo tersimpan di [arsip v0.9](docs/archive/v0.9/README.md); angka dalam arsip bukan data usaha aktif.
+Status deployment dan AI terbaru tersedia di [catatan Railway](docs/RAILWAY_MAIN_STATUS.md). Pemesanan pemasok belum otomatis; pembayaran dan penarikan masih berupa pencatatan/simulasi. Pemulihan kata sandi tersedia melalui kode, sedangkan verifikasi email belum tersedia. Input suara lokal tersedia dengan koreksi/review manusia dan belum tervalidasi pada ucapan pemilik usaha. Persetujuan hanya menyimpan rencana internal. Dokumen dan hasil evaluasi versi demo tersimpan di [arsip v0.9](docs/archive/v0.9/README.md); angka dalam arsip bukan data usaha aktif.

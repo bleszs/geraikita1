@@ -1,0 +1,59 @@
+{
+  "tablesBefore": 37,
+  "tablesAfter": 37,
+  "schemaTableNamesUnchanged": true,
+  "allOriginalRowsUnchanged": false,
+  "changes": [
+    {
+      "table": "audit",
+      "beforeRows": 44,
+      "afterRows": 49,
+      "oldRowsAbsentOrChanged": 0,
+      "newOrChangedRows": 5
+    },
+    {
+      "table": "business_state",
+      "beforeRows": 5,
+      "afterRows": 5,
+      "oldRowsAbsentOrChanged": 1,
+      "newOrChangedRows": 1
+    },
+    {
+      "table": "ingredients",
+      "beforeRows": 5,
+      "afterRows": 6,
+      "oldRowsAbsentOrChanged": 1,
+      "newOrChangedRows": 2
+    },
+    {
+      "table": "inventory",
+      "beforeRows": 5,
+      "afterRows": 6,
+      "oldRowsAbsentOrChanged": 1,
+      "newOrChangedRows": 2
+    },
+    {
+      "table": "movements",
+      "beforeRows": 12,
+      "afterRows": 13,
+      "oldRowsAbsentOrChanged": 0,
+      "newOrChangedRows": 1
+    },
+    {
+      "table": "stock_receipts",
+      "beforeRows": 4,
+      "afterRows": 5,
+      "oldRowsAbsentOrChanged": 0,
+      "newOrChangedRows": 1
+    }
+  ],
+  "oldSalesRetained": true,
+  "oldSalesRowsUnchanged": true,
+  "inventoryMatchesMovementLedger": true,
+  "integrity": "ok",
+  "foreignKeys": "ok",
+  "restoreIsolatedRowsEqual": true,
+  "productionRestorePerformed": false,
+  "productionFixturesCreated": false,
+  "deploymentId": "8b9e4ac2-8939-43ba-a136-da99d2abc83c"
+}
