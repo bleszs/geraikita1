@@ -12,9 +12,9 @@ Target `sale_amount` adalah penjualan dalam skala normalisasi sumber. Nilai floa
 
 Transformasi: proyeksi kolom identitas/tanggal/target/stockout, pemilihan ID deterministik, pemisahan per toko–produk, validasi kontinuitas, serta serialisasi ke schema publik `benchmark_only`. Seluruh file turunan berasal dari baris asli. data/gerai-kita-live.sqlite tidak dibaca atau diisi oleh skrip benchmark.
 
-Hasil: [FRESHRETAILNET_RESULTS.md](../../../docs/evaluation/FRESHRETAILNET_RESULTS.md). Protokol tetap disimpan sebelum pelatihan dan tidak disetel ulang berdasarkan test eksternal. Seluruh 500 model disimpan, termasuk yang kalah dari baseline. Dataset bukan data pengguna aplikasi; registry akun menolak aktivasi model publik.
+Hasil: FRESHRETAILNET_RESULTS.md. Protokol tetap disimpan sebelum pelatihan dan tidak disetel ulang berdasarkan test eksternal. Seluruh 500 model disimpan, termasuk yang kalah dari baseline. Dataset bukan data pengguna aplikasi; registry akun menolak aktivasi model publik.
 
-V2 menggunakan [protokol terpisah](../../../benchmarks/freshretailnet/protocol-v2.json): pooled residual boosting, validasi kronologis, lalu pengujian 200 toko yang tidak ikut pengembangan. WAPE 24,83% dibanding MA7 27,04% pada test yang sama. Kalender test masih sama dengan v1, sehingga ini bukti transfer toko, bukan replikasi waktu yang sepenuhnya baru. [Hasil v2](../../../docs/evaluation/FRESHRETAILNET_V2_RESULTS.md) dan [artefak](../../../docs/evaluation/AI_MODEL_INDEX.md).
+V2 menggunakan [protokol terpisah](../../../benchmarks/freshretailnet/protocol-v2.json): pooled residual boosting, validasi kronologis, lalu pengujian 200 toko yang tidak ikut pengembangan. WAPE 24,83% dibanding MA7 27,04% pada test yang sama. Kalender test masih sama dengan v1, sehingga ini bukti transfer toko, bukan replikasi waktu yang sepenuhnya baru. Hasil v2 dan artefak.
 
 ## Reproduksi
 
