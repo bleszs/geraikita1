@@ -1,4 +1,4 @@
-const CACHE='gerai-kita-shell-v50-staff-ai-sync';
+const CACHE='gerai-kita-shell-v50b-follow-peer-navigation';
 const FILES=['/','/index.html','/app.js','/guide.js','/guide-state.js','/guide-layout.js','/guide-content.js','/voice.js','/live-views.js','/kitchen-view.js','/kitchen-intake.js','/plan-view.js','/request-inbox.js','/display-management.js','/staff-pairing.js','/staff-management.js','/staff-workspace.js','/staff.css','/display-screen.css','/api.js','/styles.css','/offline.js','/model.js','/catalog.js','/icons.js','/receipt-measurement.js','/manifest.webmanifest','/assets/favicon.svg','/assets/icon-192.png','/assets/icon-512.png',...[400,600,700,800,900].map(w=>'/assets/nunito-sans-'+w+'.woff2')];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES))));
 self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const key of await caches.keys())if(key.startsWith('gerai-kita-shell-')&&key!==CACHE)await caches.delete(key);await self.clients.claim();})()));

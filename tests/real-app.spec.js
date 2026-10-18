@@ -91,7 +91,8 @@ async function fillReceipt(page,product){await page.getByRole('button',{name:'Ca
 test('first visit has no sample credentials; registration starts empty and every route handles no data',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.setViewportSize({width:1440,height:1000});await page.goto('/');await expect(page.getByRole('heading',{name:'Mulai dari usahamu sendiri.'})).toBeVisible();await expect(page.getByLabel('Email',{exact:true})).toHaveValue('');await expect(page.getByLabel('Kata sandi',{exact:true})).toHaveValue('');await capture(page,'live-registration-desktop');await register(page);
   const data=await state(page);expect(data.catalog).toEqual([]);expect(data.menu).toEqual([]);expect(data.transactions).toEqual([]);expect(data.offers).toEqual([]);expect(data.group.quote.configured).toBe(false);expect(data.profiles).toBeUndefined();await capture(page,'live-empty-desktop');
-  for(const route of ['stok','pesanan','restock','kelompok','surplus','riwayat','ringkasan']){await page.goto('/#'+route);await expect(page.locator('#main h1')).toBeVisible();if(route==='surplus'){await expect(page.locator('#main h1')).toHaveText('Manfaatkan surplus yang tersedia.');await expect(page.locator('nav[aria-label="Navigasi utama"] [aria-current="page"]')).toHaveAttribute('href','#surplus');}expect(await page.locator('body').innerText()).not.toMatch(/Bu Sari|Pak Budi|UD Pangan|Data contoh|Reset data/);}
+  for(const route of ['stok','pesanan','restock','kelompok','riwayat','ringkasan']){await page.goto('/#'+route);await expect(page.locator('#main h1')).toBeVisible();expect(await page.locator('body').innerText()).not.toMatch(/Bu Sari|Pak Budi|UD Pangan|Data contoh|Reset data/);}
+  await expect(page.locator('nav[aria-label="Navigasi utama"] a[href="#surplus"]')).toHaveCount(0);await page.goto('/#surplus');await expect(page.locator('#main h1')).not.toHaveText('Manfaatkan surplus yang tersedia.');await expect(page.locator('#offer-form')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
@@ -124,7 +125,7 @@ test('pending storage failure prevents receipt POST and preserves user-entered f
 });
 
 test('mobile empty states stay usable, custom text is escaped and logout never exposes an offline account snapshot',async({page,context})=>{
-  await page.setViewportSize({width:320,height:900});const name='Usaha <img src=x onerror=alert(1)>';await register(page,name);await capture(page,'live-empty-mobile');for(const r of ['stok','pesanan','restock','kelompok','surplus','riwayat']){await page.goto('/#'+r);await expect(page.locator('#main h1')).toBeVisible();expect(await page.locator('img[src=x]').count()).toBe(0);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);}
+  await page.setViewportSize({width:320,height:900});const name='Usaha <img src=x onerror=alert(1)>';await register(page,name);await capture(page,'live-empty-mobile');for(const r of ['stok','pesanan','restock','kelompok','riwayat']){await page.goto('/#'+r);await expect(page.locator('#main h1')).toBeVisible();expect(await page.locator('img[src=x]').count()).toBe(0);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);}
   await page.getByRole('button',{name:'Buka navigasi',exact:true}).click();await page.getByRole('button',{name:'Keluar akun',exact:true}).click();await expect(page.getByRole('button',{name:'Masuk',exact:true})).toBeVisible();await page.evaluate(()=>navigator.serviceWorker.ready);await context.setOffline(true);await page.reload();await expect(page.locator('.auth-layout')).toBeVisible();expect(await page.locator('.active-business').count()).toBe(0);
 });
 

@@ -7,7 +7,7 @@ Sumber pembaruan teman: `origin/rahasiagelap3.0`, commit `08ca38d` (18 Oktober 2
 - Pemilik mendapat halaman **Daftar staf** untuk biodata, kategori kasir/dapur, kode unik berulang, dan penghapusan staf setelah konfirmasi.
 - Kasir membaca teks/suara, memeriksa hasil, lalu memilih **Masukkan ke antrean dapur** atau **Catat penjualan langsung**. Pilihan langsung digunakan untuk pesanan yang sudah selesai, bukan pesanan yang masih dimasak.
 - Antrean staf memakai label Dimasak/Selesai, daftar harga/ketersediaan bagi kasir, dan peringatan nama bahan menipis. Peringatan memperhitungkan bahan yang sudah dicadangkan, tanpa membuka angka stok, resep atau harga beli.
-- Akses Surplus beserta panduan penerbitan/permintaan/persetujuan dipertahankan; branch baru sebelumnya menyembunyikan halaman ini walau proses kelompok masih menggunakannya.
+- Koreksi atas arahan pengguna: menu dan route Surplus mengikuti branch teman, tanpa halaman tersendiri. Panduan riwayat memakai penjelasan dari branch teman; data dan perhitungan historis tetap disimpan. Koreksi ini dibiarkan tanpa commit.
 - Tombol lihat/sembunyikan kata sandi dan pembaruan gaya dari branch teman dipertahankan. Dapur tidak dapat membatalkan/mencatat bahan terbuang; pencatatan tersebut tetap dilakukan pemilik.
 
 ## Perbaikan saat integrasi
