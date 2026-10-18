@@ -1,0 +1,34 @@
+{
+  "sourceHead": "f570516",
+  "uncommittedChanges": true,
+  "automaticCommitOrPush": false,
+  "backend": {
+    "passed": 335,
+    "failed": 0,
+    "initialFailures": 4,
+    "initialFailureReason": "Schema table-count expectations updated for additive table"
+  },
+  "browserRegression": {
+    "passed": 13,
+    "failed": 0
+  },
+  "newBrowserFlow": {
+    "passed": 1,
+    "failed": 0,
+    "confirmedAgain": true,
+    "initialFailureReason": "Missing exact accessible name on ingredient select, corrected"
+  },
+  "schema": {
+    "beforeTables": 37,
+    "afterTables": 38,
+    "addedTable": "usage_zero_confirmations"
+  },
+  "syntheticProductionHistoryCreated": false,
+  "forecastWeightsChanged": false,
+  "unknownDatesAutomaticallyFilled": false,
+  "forecastBaselineGapPolicyChanged": false,
+  "designCanonChanged": false,
+  "deploymentId": "1286aad5-1800-41a9-818a-11f3e4f8b79d",
+  "cloudEvidence": "zero-days-cloud-release.json",
+  "dataPreservationEvidence": "zero-days-data-preservation.json"
+}

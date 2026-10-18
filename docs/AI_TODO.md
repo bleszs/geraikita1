@@ -1,3 +1,14 @@
+# Hari tanpa pemakaian v58 — 18 Oktober 2026
+
+- [x] Konfirmasi pemakaian nol per bahan/tanggal selesai, maksimal 365 hari ke belakang; tanpa mengisi tanggal lain otomatis.
+- [x] Bahan, katalog, akses pemilik dan CSRF diperiksa; pemakaian positif tidak ditimpa. Pelaku dan waktu tercatat.
+- [x] Pembatalan konfirmasi menghapus nol buatan fitur ini dan mempertahankan nol asal transaksi. Rollback atomik dan perpindahan kelompok diuji.
+- [x] 335 tes backend lulus. Tiga belas kasus browser lama lulus; alur baru diperbaiki pada nama akses dropdown dan dikonfirmasi lulus dua kali.
+- [x] Railway 1286aad5 SUCCESS; penyimpanan/pembatalan nol terverifikasi di memori cloud, enam file publik cocok. Backup 37→38 tabel sesuai migrasi, seluruh baris lama tetap sama. [Bukti](evaluation/zero-days-cloud-release.json).
+- [ ] Impor histori nyata melalui antarmuka, hari tutup massal, evaluasi data UMKM serta hosting Qwen mandiri tetap belum selesai.
+
+[Cara memakai dan batas](USAGE_ZERO_DAYS.md). Riwayat di bawah.
+
 # Prioritas AI v57 — 18 Oktober 2026
 
 - [x] Hitung belanja usaha baru dari target porsi, resep dan stok tersedia; hasil dibatalkan ketika target/data berubah. Ini rencana produksi, bukan prediksi AI.
@@ -32,7 +43,8 @@
 - [x] 325 tes backend lulus; tur dan model browser dikonfirmasi setelah koreksi penunjuk. Railway 8b9e4ac2 SUCCESS, bobot dan lima file publik cocok, inferensi cloud serta akun kosong memori terverifikasi. [Bukti](evaluation/kulakan-cloud-release.json).
 - [ ] Kumpulkan histori UMKM Indonesia yang sah untuk evaluasi maju dan pembuktian manfaat usaha.
 - [x] Perencanaan kebutuhan awal dari target porsi dan resep nyata, tanpa mengisi histori buatan.
-- [ ] Lengkapi pencatatan hari tutup/nol dan impor histori nyata; ini tidak diselesaikan oleh model publik.
+- [x] Konfirmasi nol per bahan/tanggal yang sudah diperiksa beserta pembatalannya.
+- [ ] Tutup hari massal dan impor histori nyata melalui antarmuka; ini tidak diselesaikan oleh model publik.
 
 [Model, hasil, cara presentasi dan batas](KULAKAN_MODEL.md). Catatan di bawah adalah riwayat.
 

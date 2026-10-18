@@ -162,6 +162,8 @@ export function createApp({ filename = process.env.DATABASE_PATH || 'data/gerai-
         if(kitchenMatch&&mutating)return json(service.kitchen.change(session,kitchenMatch[1],body));
         if (pathname === '/api/bootstrap' && request.method === 'GET') return json(await stateOf(session));
         if(pathname==='/api/production-plan'&&mutating)return json(productionPlan(store,session,body,service.available));
+        if(pathname==='/api/usage-zero-days'&&mutating)return json(service.saveZeroDay(session,body));
+        if(pathname==='/api/usage-zero-days/retract'&&mutating)return json(service.retractZeroDay(session,body));
         if (pathname === '/api/usage-reviews' && mutating) return json(service.saveUsageReview(session,body),201);
         if(pathname==='/api/transcriptions' && mutating){
           const reservation=plans.reserve(session,'speech');let succeeded=false;

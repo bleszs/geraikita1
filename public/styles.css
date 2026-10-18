@@ -4798,6 +4798,13 @@ form .notice {
 .usage-review:not([open]){padding-top:18px;padding-bottom:18px}
 @media(max-width:600px){.usage-panel-summary h2{display:block;margin:0 0 8px;font-size:18px}.usage-panel-summary>span{display:inline-block;margin-top:8px}}
 .production-planner>summary{cursor:pointer;font-weight:800;min-height:44px}
+.usage-zero-panel>summary{cursor:pointer;font-weight:800;min-height:44px}
+.usage-zero-body{padding-top:16px}
+.usage-zero-body h3{margin-top:24px}
+.usage-zero-list{list-style:none;padding:0}
+.usage-zero-list li{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+.usage-zero-list small{display:block;color:var(--muted);margin-top:4px}
+@media(max-width:600px){.usage-zero-body .form-grid{grid-template-columns:1fr}.usage-zero-list li{align-items:stretch;flex-direction:column}.usage-zero-list button{width:100%}}
 .production-planner-body{padding-top:16px}
 .production-targets{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
 .production-targets label{margin:0;overflow-wrap:anywhere}

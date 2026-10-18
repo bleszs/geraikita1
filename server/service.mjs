@@ -14,9 +14,11 @@ import {createForecastRegistry} from './forecast-registry.mjs';
 import {screenUsage} from './ml/usage-anomalies.mjs';
 import {screenDrift} from './ml/usage-drift.mjs';
 import {createUsageDecisions} from './usage-decisions.mjs';
+import {createUsageZeroDays} from './usage-zero-days.mjs';
 
 export function createService(store) {
   const usageDecisions=createUsageDecisions(store);
+  const zeroDays=createUsageZeroDays(store);
   const models=createForecastRegistry();
   const { run, get, all, atomic, log, movement } = store;
   const scope = s => [s.workspace_id, s.business_id];
@@ -71,7 +73,7 @@ export function createService(store) {
     const stockReceipts = all('SELECT * FROM stock_receipts WHERE workspace_id=? AND business_id=? ORDER BY created_at DESC', ...scope(s)).map(r => ({ ...r, qty: quantity(r.quantity) }));
     const movements = all('SELECT product_id,delta,reason,ref,created_at FROM movements WHERE workspace_id=? AND business_id=? ORDER BY rowid DESC LIMIT 100', ...scope(s)).map(m => ({ ...m, qty: quantity(m.delta) }));
     const sharedProduct=JSON.parse(workspace.settings || '{}').product || null;
-    return { kulakanModel:kulakanModelSummary(), kitchen:kitchen.snapshot(s), mode: 'live', workspaceId: s.workspace_id, workspaceEpoch: workspace.created_at, business, community:{enabled:JSON.parse(workspace.settings||'{}').communityEnabled!==false,name:JSON.parse(workspace.settings||'{}').communityEnabled!==false?workspace.name:'Belum bergabung kelompok',canManage:workspace.owner_business_id===s.business_id,inviteCode:JSON.parse(workspace.settings||'{}').communityEnabled!==false&&workspace.owner_business_id===s.business_id ? workspace.join_code : null}, sharedProduct, catalog, menu: store.menus(s), catalogRevision: businessState.catalog_revision, stock, availableStock, stockReceipts, movements, transactions, recommendations, usageReviews:usageDecisions.list(s,recommendations), demand: ownDemand.qty || recommendations.find(r=>r.productId===sharedProduct?.id)?.amount || null, shared: !!ownDemand.active && ownDemand.expires_at > Date.now(), needsReview: !cycles.locked(s) && ownDemand.stock_revision !== businessState.stock_revision, budget: ownDemand.budget, group: group(s), collectiveHistory:cycles.history(s), offers, transfers, audit, finance: finance(s), date: dayAt(), csrf: s.csrf };
+    return { kulakanModel:kulakanModelSummary(), kitchen:kitchen.snapshot(s), mode: 'live', workspaceId: s.workspace_id, workspaceEpoch: workspace.created_at, business, community:{enabled:JSON.parse(workspace.settings||'{}').communityEnabled!==false,name:JSON.parse(workspace.settings||'{}').communityEnabled!==false?workspace.name:'Belum bergabung kelompok',canManage:workspace.owner_business_id===s.business_id,inviteCode:JSON.parse(workspace.settings||'{}').communityEnabled!==false&&workspace.owner_business_id===s.business_id ? workspace.join_code : null}, sharedProduct, catalog, menu: store.menus(s), catalogRevision: businessState.catalog_revision, stock, availableStock, stockReceipts, movements, transactions, recommendations, usageReviews:usageDecisions.list(s,recommendations), usageZeroDays:zeroDays.list(s), demand: ownDemand.qty || recommendations.find(r=>r.productId===sharedProduct?.id)?.amount || null, shared: !!ownDemand.active && ownDemand.expires_at > Date.now(), needsReview: !cycles.locked(s) && ownDemand.stock_revision !== businessState.stock_revision, budget: ownDemand.budget, group: group(s), collectiveHistory:cycles.history(s), offers, transfers, audit, finance: finance(s), date: dayAt(), csrf: s.csrf };
   }
   function transaction(s, body) {
     requireValue(typeof body.idempotencyKey === 'string' && body.idempotencyKey.length >= 8 && body.idempotencyKey.length <= 100, 'Kunci transaksi tidak valid.');
@@ -234,5 +236,5 @@ export function createService(store) {
       return { id, amount: body.amount, duplicate: false };
     });
   }
-  return store.attribute({ kitchen, requests, bootstrap, finance, withdraw, saveUsageReview:usageDecisions.save, transaction, cancelSale, demand, group, approval, requestTransfer, transferDecision, ...operations, ...configuration, createOffer:surplus.create, withdrawOffer:surplus.withdraw, finalizeCollective:cycles.finalize, receiveCollective:cycles.receive, cancelCollectiveReceipt:cycles.cancelReceipt, cancelCollective:cycles.cancel, nextCycle:cycles.next });
+  return store.attribute({ kitchen, requests, bootstrap, finance, withdraw, saveUsageReview:usageDecisions.save, saveZeroDay:zeroDays.save, retractZeroDay:zeroDays.retract, transaction, cancelSale, demand, group, approval, requestTransfer, transferDecision, ...operations, ...configuration, createOffer:surplus.create, withdrawOffer:surplus.withdraw, finalizeCollective:cycles.finalize, receiveCollective:cycles.receive, cancelCollectiveReceipt:cycles.cancelReceipt, cancelCollective:cycles.cancel, nextCycle:cycles.next });
 }

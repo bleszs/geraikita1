@@ -1,0 +1,3 @@
+# Hari tanpa pemakaian
+
+Extend the existing restock screen in cream/terracotta, Nunito and native controls. Add a closed disclosure for an owner to confirm an actual ingredient/day with no usage. A date with missing records is never filled automatically. Keep date, ingredient and confirmation close to the submit button; show recent confirmations with an explicit retract action. Preserve input and disclosure across refreshes; clear the checkbox after save. Reuse current spacing, buttons, focus and light/dark states. Inspect desktop and 360px mobile in one batched pass, then at most one correction and confirmation. No new visual world, no change to DESIGN.md.

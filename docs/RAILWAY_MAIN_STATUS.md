@@ -1,3 +1,15 @@
+# Pemakaian nol terkonfirmasi v58 — 18 Oktober 2026
+
+Deployment **`1286aad5-1800-41a9-818a-11f3e4f8b79d` SUCCESS** di https://web-production-a3e13.up.railway.app. Source upload folder kerja setelah HEAD `f570516`, tanpa commit/push otomatis.
+
+- Pemilik dapat membuka **Saran kulakan → Catat hari tanpa pemakaian**, memilih bahan/tanggal selesai dan menyimpan nol setelah memeriksa catatan. Konfirmasi dapat dibatalkan; nol asal transaksi tetap dipertahankan.
+- Tidak mengisi tanggal lain, membuat penjualan atau mengubah stok/saldo. Pemakaian positif ditolak; akses pemilik, CSRF, revisi katalog dan isolasi usaha diperiksa.
+- Backend akhir 335/335 lulus. Tiga belas kasus browser lama lulus; kasus baru dikoreksi pada nama akses dropdown lalu lulus dua kali. Model prediksi, Qwen 1.5B dan Whisper Base tersedia saat verifikasi cloud.
+- Cloud memverifikasi simpan/batalkan nol pada database memori, tidak membuka database produksi. Bobot prediksi tetap cocok dengan lokal dan tiga inferensi sesuai Python. Enam berkas publik serta modul staf API cocok.
+- Backup 37→38 tabel sesuai satu migrasi tambahan; semua baris lama sama, stok cocok ledger, integrity/FK dan restore terisolasi valid. Tanpa fixture atau restore produksi.
+
+[Bukti cloud](evaluation/zero-days-cloud-release.json) · [Bukti data](evaluation/zero-days-data-preservation.json) · [Panduan dan batas](USAGE_ZERO_DAYS.md). Riwayat sebelumnya di bawah.
+
 # Prioritas AI v57 aktif — 18 Oktober 2026
 
 Deployment **`efa8d121-792a-4fe1-a464-0d330a110f1e` SUCCESS** di https://web-production-a3e13.up.railway.app. Source upload folder kerja setelah HEAD `ca3d310`, tanpa commit/push otomatis.

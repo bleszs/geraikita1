@@ -1,5 +1,7 @@
 # Prioritas AI: kulakan, voice dan pemulihan Qwen
 
+Pemilik kini dapat memakai **Saran kulakan → Catat hari tanpa pemakaian** untuk mencatat nol yang sudah diperiksa dan membatalkannya jika keliru. Stok/transaksi tetap; tanggal lain tidak diisi otomatis. [Panduan](docs/USAGE_ZERO_DAYS.md).
+
 Usaha baru bisa membuka **Saran kulakan → Hitung dari target porsi** untuk menghitung kebutuhan belanja dari resep dan stok tanpa mengisi histori buatan. Prediksi AI tetap mengikuti kecukupan histori dan evaluasi model. Voice mendapat bantuan nama menu usaha; Qwen mencoba kembali otomatis setelah gangguan koneksi.
 
 Aktif di [Railway](https://web-production-a3e13.up.railway.app). [Cara kerja, verifikasi dan batas](docs/AI_PRIORITIES.md), [status deployment](docs/RAILWAY_MAIN_STATUS.md). Tanpa commit/push otomatis. Riwayat versi di bawah.

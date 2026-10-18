@@ -18,6 +18,8 @@ Salin template kosong datasets/templates/daily-usage.csv dan metadata.json ke da
 
 ## Jika belum mempunyai arsip
 
+Untuk hari yang sudah diperiksa dan benar-benar tidak memakai suatu bahan, buka **Saran kulakan → Catat hari tanpa pemakaian**. Pilih bahan/tanggal selesai dan konfirmasikan. Ini menyimpan nol eksplisit tanpa penjualan atau perubahan stok. Jika keliru, gunakan Batalkan konfirmasi. Tanggal yang belum diketahui tetap kosong; jangan mengisi nol untuk mengejar syarat model. [Cara kerja dan batas](USAGE_ZERO_DAYS.md).
+
 Mulai pencatatan harian dan tinjau kelengkapannya. Jangan menunggu layar model berubah sebelum mencatat transaksi: baseline baru muncul setelah histori cukup, dan pelatihan terpisah dilakukan setelah dataset lengkap tersedia. Untuk final yang waktunya dekat, arsip usaha yang sudah ada secara berizin merupakan jalur yang masuk akal; jika tidak tersedia, jelaskan bahwa model bisnis belum dilatih. Menampilkan kode pipeline dan hasil tes terisolasi tidak sama dengan hasil pelatihan lapangan.
 
 Ekspor histori ledger tersedia melalui perintah forecast export; langkah dan konfirmasi periode lengkap ada di [AI_TRAINING.md](AI_TRAINING.md). Ekspor tidak mengubah stok/transaksi. Simpan file secara privat dan berikan lokasi file kepada asisten ketika ingin menjalankan validasi/pelatihan. Bila kurang dari 84 hari, pipeline akan memberi pesan kurang data; tidak membuat tanggal/jumlah pengganti.
